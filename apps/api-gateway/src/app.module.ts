@@ -8,6 +8,7 @@ import { WishlistController } from "./controllers/wishlist.controller";
 import { AuthModule } from "@app/auth";
 import { OrdersController } from "./controllers/order.controller";
 import { HealthController } from "./controllers/health.controller";
+import { WebhookController } from "./controllers/webhook.controller";
 
 @Module({
   imports: [
@@ -92,6 +93,7 @@ import { HealthController } from "./controllers/health.controller";
     OrdersController,
     AffiliateController,
     WishlistController,
+    WebhookController,
     HealthController
   ],
 })

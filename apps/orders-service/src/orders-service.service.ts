@@ -273,6 +273,72 @@ export class OrdersService {
     }
   }
 
+
+  async markOrderPaidByTransaction(transactionId: string, paymentData: any) {
+    try {
+      const order = await this.orderRepository.findOne({
+        where: { skipCashTransactionId: transactionId }
+      });
+
+      if (!order) {
+        throw new RpcException({
+          statusCode: 404,
+          message: `Order not found for transaction: ${transactionId}`
+        });
+      }
+
+      order.isPaid = true;
+      order.paidAt = new Date();
+      order.paymentData = paymentData;
+      order.wcPaymentStatus = 'paid';
+
+      await this.orderRepository.save(order);
+
+      await this.sendNotification(
+        order.userId,
+        'Payment Confirmed 💳',
+        `Your payment for order (${order.wcOrderId}) has been confirmed successfully.`
+      );
+
+      this.logger.log(`Order ${order.id} marked as paid via webhook`);
+      return order;
+    } catch (error) {
+      throw toRpc(error, 'Failed to mark order as paid');
+    }
+  }
+
+  async cancelOrderByTransaction(transactionId: string, reason: string) {
+    try {
+      const order = await this.orderRepository.findOne({
+        where: { skipCashTransactionId: transactionId }
+      });
+
+      if (!order) {
+        throw new RpcException({
+          statusCode: 404,
+          message: `Order not found for transaction: ${transactionId}`
+        });
+      }
+
+      order.wcOrderStatus = 'cancelled';
+      order.wcPaymentStatus = 'failed';
+
+      await this.orderRepository.save(order);
+
+      await this.sendNotification(
+        order.userId,
+        'Order Cancelled ❌',
+        `Your order (${order.wcOrderId}) has been cancelled due to payment failure.`
+      );
+
+      this.logger.log(`Order ${order.id} cancelled: ${reason}`);
+      return order;
+    } catch (error) {
+      throw toRpc(error, 'Failed to cancel order');
+    }
+  }
+
+
   async markAsDelivered(id: string) {
     try {
       const order = await this.getOrderById(id);

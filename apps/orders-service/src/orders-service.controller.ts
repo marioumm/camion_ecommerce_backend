@@ -82,6 +82,35 @@ export class OrdersController {
     }
   }
 
+  // في OrdersController أضف:
+
+  @MessagePattern({ cmd: 'mark_order_paid_by_transaction' })
+  async markOrderPaidByTransaction(@Payload() data: { transactionId: string; paymentData: any }) {
+    try {
+      const order = await this.ordersService.markOrderPaidByTransaction(
+        data.transactionId,
+        data.paymentData
+      );
+      return this.mapOrderResponse(order);
+    } catch (error) {
+      throw toRpc(error, 'Failed to mark order as paid by transaction');
+    }
+  }
+
+  @MessagePattern({ cmd: 'cancel_order_by_transaction' })
+  async cancelOrderByTransaction(@Payload() data: { transactionId: string; reason: string }) {
+    try {
+      const order = await this.ordersService.cancelOrderByTransaction(
+        data.transactionId,
+        data.reason
+      );
+      return this.mapOrderResponse(order);
+    } catch (error) {
+      throw toRpc(error, 'Failed to cancel order by transaction');
+    }
+  }
+
+
   @MessagePattern({ cmd: 'mark_order_delivered' })
   async markAsDelivered(@Payload() id: string) {
     try {
