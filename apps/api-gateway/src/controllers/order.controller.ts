@@ -52,4 +52,17 @@ export class OrdersController {
   deleteOrder(@Param('id') id: string) {
     return this.orderClient.send({ cmd: 'delete_order' }, id);
   }
+
+  @Get('status/:status')
+  @UseGuards(JwtAuthGuard)
+  getOrdersByStatus(
+    @CurrentUserId() userId: string,
+    @Param('status') status: string
+  ) {
+    return this.orderClient.send(
+      { cmd: 'get_orders_by_status' },
+      { userId, status }
+    );
+  }
+
 }

@@ -1,48 +1,41 @@
-// src/orders/entities/order.entity.ts
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  CreateDateColumn,
-  UpdateDateColumn,
-} from 'typeorm';
+import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 
 @Entity('orders')
 export class Order {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column()
+  @Column({ nullable: true })
   wcOrderId: string;
 
-  @Column()
+  @Column({ nullable: true })
   wcOrderKey: string;
 
-  @Column()
+  @Column({ nullable: true })
   wcOrderStatus: string;
 
-  @Column()
+  @Column({ nullable: true })
   wcPaymentStatus: string;
 
-  @Column()
+  @Column({ nullable: true })
   currency: string;
 
-  @Column()
+  @Column({ nullable: true })
   total: string;
 
-  @Column()
+  @Column({ nullable: true })
   userId: string;
 
-  @Column({ type: 'jsonb', nullable: false })
+  @Column({ type: 'jsonb', nullable: true, default: () => "'[]'" })
   items: any;
 
-  @Column({ type: 'jsonb', nullable: false })
+  @Column({ type: 'jsonb', nullable: true })
   customerData: any;
 
-  @Column({ type: 'varchar', nullable: false })
+  @Column({ type: 'varchar', nullable: true })
   paymentMethod: string;
 
-  @Column({ type: 'jsonb', nullable: false, default: () => "'[]'" })
+  @Column({ type: 'jsonb', nullable: true, default: () => "'[]'" })
   paymentData: any;
 
   @Column({ default: false })
@@ -58,11 +51,10 @@ export class Order {
   deliveredAt?: Date;
 
   @Column({ nullable: true })
-  stripeSessionId: string;
+  skipCashPaymentUrl: string;
 
   @Column({ nullable: true })
-  stripeCheckoutUrl: string;
-
+  skipCashTransactionId: string;
 
   @CreateDateColumn()
   createdAt: Date;

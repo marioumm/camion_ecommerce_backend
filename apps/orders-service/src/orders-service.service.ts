@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
-/* eslint-disable @typescript-eslint/no-require-imports */
+/* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
@@ -10,12 +10,9 @@ import { Order } from './entities/order.entity';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import axios from 'axios';
+import * as crypto from 'crypto';
 import { CartItem } from 'apps/cart-service/src/entities/cart.entity';
 import { catchError, firstValueFrom, timeout } from 'rxjs';
-// import Stripe from 'stripe';
-
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-
 
 
 @Injectable()
@@ -31,6 +28,8 @@ export class OrdersService {
     @Inject('USERS_SERVICE')
     private readonly usersClient: ClientProxy,
   ) { }
+
+  private SKIPCASH_BASE_URL = process.env.SKIPCASH_BASE_URL;
 
   private async sendNotification(userId: string, title: string, body: string) {
     try {
@@ -79,9 +78,9 @@ export class OrdersService {
       }));
 
       const order_data = {
-        items: wcItems,
+        line_items: wcItems,
         customer_data: dto.customer_data,
-        payment_method: "cod",
+        payment_method: "skipcash",
         payment_data: dto.payment_data,
       };
 
@@ -93,6 +92,7 @@ export class OrdersService {
       );
     }
   }
+
   private async cancelWCOrder(orderID: string) {
     try {
       const url = `${this.WC_BASE_URL}/checkout/${orderID}`;
@@ -105,6 +105,86 @@ export class OrdersService {
     }
   }
 
+  async createSkipCashPayment(orderId: string, amount: number, currency: string, customerData: any) {
+    try {
+      const url = `${this.SKIPCASH_BASE_URL}/api/v1/payments`;
+      console.log('SKIPCASH_CLIENT_ID:', process.env.SKIPCASH_CLIENT_ID);
+      console.log('SKIPCASH_BASE_URL:', this.SKIPCASH_BASE_URL);
+      const payload = {
+        Uid: this.generateUUID(),
+        KeyId: process.env.SKIPCASH_KEY_ID,
+        Amount: amount.toFixed(2),
+        FirstName: customerData.first_name,
+        LastName: customerData.last_name,
+        Phone: customerData.phone,
+        Email: customerData.email,
+        Street: customerData.address_1,
+        City: customerData.city,
+        State: customerData.state,
+        Country: customerData.country,
+        PostalCode: customerData.postcode,
+        TransactionId: String(orderId),
+        Custom1: ""
+      };
+
+      const signature = this.generateSkipCashSignature(payload);
+
+
+      console.log('SkipCash Payload:', JSON.stringify(payload, null, 2));
+      console.log('Generated Signature:', signature);
+
+      const res = await axios.post(url, payload, {
+        headers: {
+          'Authorization': signature,
+          'Content-Type': 'application/json'
+        }
+      });
+      console.log('SkipCash response data:', res.data);
+      return res.data;
+    } catch (error) {
+      this.logger.error(`SkipCash payment failed: ${error.message}`);
+      if (error.response?.data) {
+        this.logger.error('SkipCash error details:', error.response.data);
+      }
+      throw new NotFoundException(`SkipCash payment error: ${error.message}`);
+    }
+  }
+
+  private generateSkipCashSignature(payload: any): string {
+    const orderedFields = [
+      'Uid', 'KeyId', 'Amount', 'FirstName', 'LastName',
+      'Phone', 'Email', 'Street', 'City', 'State',
+      'Country', 'PostalCode', 'TransactionId', 'Custom1'
+    ];
+
+    const nonEmptyFields = orderedFields
+      .filter(key => payload[key] && payload[key] !== '')
+      .map(key => `${key}=${String(payload[key]).trim()}`)
+      .join(',');
+
+
+    console.log('Signature Base String:', nonEmptyFields);
+
+
+    const signature = crypto
+      .createHmac('sha256', process.env.SKIPCASH_KEY_SECRET || '')
+      .update(nonEmptyFields)
+      .digest('base64');
+
+
+    return signature;
+
+  }
+
+  private generateUUID(): string {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+      const r = Math.random() * 16 | 0;
+      const v = c === 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
+  }
+
+
   async createOrder(userId: string, items: CartItem[], dto: CreateOrderDto): Promise<Order> {
     try {
       const res = await this.createWCOrder(dto, items);
@@ -116,37 +196,12 @@ export class OrdersService {
       );
       const currency = res.data.currency || 'egp';
 
-      const line_items = items.map((item) => ({
-        price_data: {
-          currency,
-          unit_amount: Math.round(Number(item.price ?? 0) * 100),
-          product_data: {
-            name: item.title ?? "",
-            metadata: item.variation ? { variation: JSON.stringify(item.variation) } : {},
-          },
-        },
-        quantity: Number(item.quantity ?? 1),
-      }));
-
-      let session;
-      try {
-        session = await stripe.checkout.sessions.create({
-          mode: 'payment',
-          line_items,
-          success_url: dto.success_url || 'https://your-frontend.com/order-complete?session_id={CHECKOUT_SESSION_ID}',
-          cancel_url: dto.cancel_url || 'https://your-frontend.com/order-cancelled',
-          client_reference_id: String(userId),
-          customer_email: dto.customer_data?.email,
-          metadata: {
-            wcOrderId: res.data.order_id,
-            address: JSON.stringify(dto.customer_data),
-          },
-        });
-      } catch (stripeError) {
-        const cres = await this.cancelWCOrder(res.data.order_id);
-        console.log("cancelled WC order due to stripe error:", cres.data);
-        throw stripeError;
-      }
+      const skipCashPayment = await this.createSkipCashPayment(
+        res.data.order_id,
+        totalOrderPrice,
+        currency,
+        dto.customer_data
+      );
 
       const order = this.orderRepository.create({
         wcOrderId: res.data.order_id,
@@ -158,12 +213,12 @@ export class OrdersService {
         userId,
         items,
         customerData: dto.customer_data,
-        paymentMethod: "stripe",
+        paymentMethod: "skipcash",
         paymentData: dto.payment_data,
         isPaid: false,
         isDelivered: false,
-        stripeSessionId: session.id,
-        stripeCheckoutUrl: session.url,
+        skipCashTransactionId: skipCashPayment.resultObj.transactionId,
+        skipCashPaymentUrl: skipCashPayment.resultObj.payUrl,
       });
       await this.orderRepository.save(order);
 
@@ -218,15 +273,6 @@ export class OrdersService {
     }
   }
 
-  async markOrderPaidBySessionId(sessionId: string) {
-    const order = await this.orderRepository.findOne({ where: { stripeSessionId: sessionId } });
-    if (order && !order.isPaid) {
-      order.isPaid = true;
-      order.paidAt = new Date();
-      await this.orderRepository.save(order);
-    }
-  }
-
   async markAsDelivered(id: string) {
     try {
       const order = await this.getOrderById(id);
@@ -260,6 +306,32 @@ export class OrdersService {
       throw toRpc(error, 'Failed to delete order');
     }
   }
+
+  async getOrdersByStatus(userId: string, status: string) {
+    try {
+      const filters: any = { userId };
+
+      if (status === 'complete' || status === 'completed') {
+        filters.wcOrderStatus = 'completed';
+      } else if (status === 'paid') {
+        filters.isPaid = true;
+      } else if (status === 'delivered') {
+        filters.isDelivered = true;
+      } else if (status === 'pending') {
+        filters.isPaid = false;
+        filters.isDelivered = false;
+      }
+
+      return await this.orderRepository.find({
+        where: filters,
+        order: { createdAt: 'DESC' },
+      });
+    } catch (error) {
+      throw toRpc(error, 'Failed to get orders by status');
+    }
+  }
+
+
 }
 
 function toRpc(error: any, fallbackMsg?: string) {

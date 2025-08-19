@@ -41,8 +41,6 @@ export class OrdersController {
         status: 200,
         message: 'Order created. Please complete payment.',
         data: {
-          sessionId: order.stripeSessionId,
-          stripeCheckoutUrl: order.stripeCheckoutUrl,
           orderId: order.id,
           order,
         }
@@ -51,14 +49,6 @@ export class OrdersController {
       throw toRpc(error, 'Failed to create order');
     }
   }
-
-
-  @MessagePattern({ cmd: 'mark_order_paid_by_session_id' })
-  async markOrderPaid(@Payload() data: { sessionId: string }) {
-    await this.ordersService.markOrderPaidBySessionId(data.sessionId);
-  }
-
-
 
   @MessagePattern({ cmd: 'get_order_by_id' })
   async getOrder(@Payload() id: string) {
@@ -116,6 +106,17 @@ export class OrdersController {
     }
   }
 
+  @MessagePattern({ cmd: 'get_orders_by_status' })
+  async getOrdersByStatus(@Payload() data: { userId: string; status: string }) {
+    try {
+      const orders = await this.ordersService.getOrdersByStatus(data.userId, data.status);
+      return orders.map((order) => this.mapOrderResponse(order));
+    } catch (error) {
+      throw toRpc(error, 'Failed to get orders by status');
+    }
+  }
+
+
   mapOrderResponse(order: Order) {
     return {
       id: order.id,
@@ -128,6 +129,8 @@ export class OrdersController {
       isDelivered: order.isDelivered,
       deliveredAt: order.deliveredAt,
       createdAt: order.createdAt,
+      skipCashPaymentUrl: order.skipCashPaymentUrl,
+      skipCashTransactionId: order.skipCashTransactionId,
     };
   }
 }
