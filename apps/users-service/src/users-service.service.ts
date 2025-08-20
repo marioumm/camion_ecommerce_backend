@@ -127,7 +127,6 @@ export class UsersService {
         });
       }
 
-      // Find user by email only
       const user = await this.userRepository.findOne({
         where: { email: dto.email },
       });
