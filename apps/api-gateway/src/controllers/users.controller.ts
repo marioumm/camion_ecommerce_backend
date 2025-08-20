@@ -53,7 +53,7 @@ export class UserController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  // @Roles(UserRole.ADMIN)
+  @Roles(UserRole.ADMIN)
   @Post()
   createUser(@Body() body: CreateUserDto) {
     return this.usersClient.send({ cmd: 'create_user' }, body);

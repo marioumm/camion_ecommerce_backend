@@ -82,7 +82,6 @@ export class OrdersController {
     }
   }
 
-  // في OrdersController أضف:
 
   @MessagePattern({ cmd: 'mark_order_paid_by_transaction' })
   async markOrderPaidByTransaction(@Payload() data: { transactionId: string; paymentData: any }) {
@@ -156,23 +155,49 @@ export class OrdersController {
   }
 
 
-
   mapOrderResponse(order: Order) {
     return {
       id: order.id,
+      wcOrderId: order.wcOrderId, // ✅ ده اللي محتاجه للـ tracking!
+      userId: order.userId,
+      wcOrderStatus: order.wcOrderStatus,
+      wcPaymentStatus: order.wcPaymentStatus,
+      wcOrderKey: order.wcOrderKey,
+      total: order.total,
+      currency: order.currency,
       items: order.items,
       customer_data: order.customerData,
       payment_method: order.paymentMethod,
       payment_data: order.paymentData,
       isPaid: order.isPaid,
-      paidAt: order.paidAt,
       isDelivered: order.isDelivered,
-      deliveredAt: order.deliveredAt,
       createdAt: order.createdAt,
+      paidAt: order.paidAt,
+      deliveredAt: order.deliveredAt,
       skipCashPaymentUrl: order.skipCashPaymentUrl,
       skipCashTransactionId: order.skipCashTransactionId,
+
+      // ✅ معلومات إضافية للفرونت إند
+      customerName: `${order.customerData.first_name} ${order.customerData.last_name}`,
+      customerEmail: order.customerData.email,
+      customerPhone: order.customerData.phone,
+      itemsCount: order.items?.length || 0,
+      trackingUrl: `/track-order/${order.wcOrderId}`,
+      statusDisplay: this.getStatusDisplay(order),
     };
   }
+
+  private getStatusDisplay(order: Order): string {
+    if (order.isDelivered) return 'Delivered ✅';
+    if (order.isPaid && order.wcOrderStatus === 'completed') return 'Completed 📦';
+    if (order.isPaid && order.wcOrderStatus === 'processing') return 'Processing 🔄';
+    if (order.isPaid) return 'Paid 💳';
+    if (order.wcOrderStatus === 'pending') return 'Pending Payment ⏳';
+    if (order.wcOrderStatus === 'cancelled') return 'Cancelled ❌';
+    return order.wcOrderStatus || 'Unknown';
+  }
+
+
 }
 
 function toRpc(error: any, fallbackMsg?: string) {

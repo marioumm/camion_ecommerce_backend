@@ -246,16 +246,18 @@ export class OrdersService {
     }
   }
 
-  async getOrdersByUser(userId: string) {
-    try {
-      return await this.orderRepository.find({
-        where: { userId },
-        order: { createdAt: 'DESC' },
-      });
-    } catch (error) {
-      throw toRpc(error, 'Failed to get orders by user');
-    }
+async getOrdersByUser(userId: string) {
+  try {
+    return await this.orderRepository.find({
+      where: { userId },
+      order: { createdAt: 'DESC' },
+    });
+  } catch (error) {
+    throw toRpc(error, 'Failed to get orders by user');
   }
+}
+
+
 
   async markAsPaid(id: string) {
     try {
