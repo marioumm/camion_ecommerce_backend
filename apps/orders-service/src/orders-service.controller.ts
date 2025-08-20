@@ -145,6 +145,17 @@ export class OrdersController {
     }
   }
 
+  @MessagePattern({ cmd: 'get_all_orders' })
+  async getAllOrders() {
+    try {
+      const orders = await this.ordersService.getAllOrders();
+      return orders.map((order) => this.mapOrderResponse(order));
+    } catch (error) {
+      throw toRpc(error, 'Failed to get all orders');
+    }
+  }
+
+
 
   mapOrderResponse(order: Order) {
     return {

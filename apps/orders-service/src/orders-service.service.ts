@@ -397,6 +397,15 @@ export class OrdersService {
     }
   }
 
+  async getAllOrders() {
+    try {
+      return await this.orderRepository.find({
+        order: { createdAt: 'DESC' },
+      });
+    } catch (error) {
+      throw toRpc(error, 'Failed to get all orders');
+    }
+  }
 
 }
 

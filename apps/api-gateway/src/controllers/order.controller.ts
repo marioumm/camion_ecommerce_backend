@@ -65,4 +65,11 @@ export class OrdersController {
     );
   }
 
+  @Get()
+  @UseGuards(JwtAuthGuard)
+  @Roles(UserRole.ADMIN) 
+  getAllOrders() {
+    return this.orderClient.send({ cmd: 'get_all_orders' }, {});
+  }
+
 }
