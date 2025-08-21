@@ -184,56 +184,78 @@ export class OrdersService {
     });
   }
 
-
-  async createOrder(userId: string, items: CartItem[], dto: CreateOrderDto): Promise<Order> {
-    try {
-      const res = await this.createWCOrder(dto, items);
-
-      const totalOrderPrice = items.reduce(
-        (sum: number, item) =>
-          sum + (Number(item.price ?? 0) * Number(item.quantity ?? 1)),
-        0
+async createOrder(userId: string, items: CartItem[], dto: CreateOrderDto): Promise<Order> {
+  try {
+    let customerData = dto.customer_data;
+    if (!customerData) {
+      customerData = await firstValueFrom(
+        this.usersClient.send({ cmd: 'getUserAddress' }, userId).pipe(
+          timeout(3000),
+          catchError(() => {
+            this.logger.warn(`User ${userId} address not found`);
+            return [null];
+          }),
+        ),
       );
-      const currency = res.data.currency || 'egp';
-
-      const skipCashPayment = await this.createSkipCashPayment(
-        res.data.order_id,
-        totalOrderPrice,
-        currency,
-        dto.customer_data
-      );
-
-      const order = this.orderRepository.create({
-        wcOrderId: res.data.order_id,
-        wcOrderStatus: res.data.order_status,
-        wcPaymentStatus: res.data.payment_status,
-        wcOrderKey: res.data.order_key,
-        currency,
-        total: totalOrderPrice.toString(),
-        userId,
-        items,
-        customerData: dto.customer_data,
-        paymentMethod: "skipcash",
-        paymentData: dto.payment_data,
-        isPaid: false,
-        isDelivered: false,
-        skipCashTransactionId: skipCashPayment.resultObj.transactionId,
-        skipCashPaymentUrl: skipCashPayment.resultObj.payUrl,
-      });
-      await this.orderRepository.save(order);
-
-      await this.sendNotification(
-        userId,
-        'Order Created 🛒',
-        `Your order (${order.wcOrderId}) has been created successfully.`
-      );
-
-      return order;
-    } catch (error) {
-      throw toRpc(error, 'Failed to create order');
-
+      if (!customerData) {
+        throw new RpcException('User address data is required');
+      }
     }
+
+    if (dto.customer_data) {
+      await firstValueFrom(
+        this.usersClient.send({ cmd: 'updateUserAddress' }, { userId, addressDto: dto.customer_data }),
+      );
+    }
+
+    const updatedDto = { ...dto, customer_data: customerData };
+
+    const res = await this.createWCOrder(updatedDto, items);
+
+    const totalOrderPrice = items.reduce(
+      (sum: number, item) => sum + (Number(item.price ?? 0) * Number(item.quantity ?? 1)),
+      0,
+    );
+    const currency = res.data.currency || 'egp';
+
+    const skipCashPayment = await this.createSkipCashPayment(
+      res.data.order_id,
+      totalOrderPrice,
+      currency,
+      customerData,
+    );
+
+    const order = this.orderRepository.create({
+      wcOrderId: res.data.order_id,
+      wcOrderStatus: res.data.order_status,
+      wcPaymentStatus: res.data.payment_status,
+      wcOrderKey: res.data.order_key,
+      currency,
+      total: totalOrderPrice.toString(),
+      userId,
+      items,
+      customerData,
+      paymentMethod: 'skipcash',
+      paymentData: dto.payment_data,
+      isPaid: false,
+      isDelivered: false,
+      skipCashTransactionId: skipCashPayment.resultObj.transactionId,
+      skipCashPaymentUrl: skipCashPayment.resultObj.payUrl,
+    });
+    await this.orderRepository.save(order);
+
+    await this.sendNotification(
+      userId,
+      'Order Created 🛒',
+      `Your order (${order.wcOrderId}) has been created successfully.`,
+    );
+
+    return order;
+  } catch (error) {
+    throw toRpc(error, 'Failed to create order');
   }
+}
+
 
   async getOrderById(id: string) {
     try {
@@ -256,8 +278,6 @@ export class OrdersService {
       throw toRpc(error, 'Failed to get orders by user');
     }
   }
-
-
 
   async markAsPaid(id: string) {
     try {

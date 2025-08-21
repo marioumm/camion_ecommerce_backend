@@ -16,6 +16,7 @@ import { FilterUsersDto } from 'apps/users-service/src/dto/filter-users.dto';
 import { LoginAdminDto } from 'apps/users-service/src/dto/login-admin.dto';
 import { LoginDto } from 'apps/users-service/src/dto/login.dto';
 import { RegisterDto } from 'apps/users-service/src/dto/register.dto';
+import { UpdateAddressDto } from 'apps/users-service/src/dto/update-address.dto';
 import { UpdateUserDto } from 'apps/users-service/src/dto/update-user.dto';
 import { VerifyDto } from 'apps/users-service/src/dto/verifyOTP.dto';
 import { UserRole } from 'apps/users-service/src/entities/user.entity';
@@ -111,6 +112,28 @@ export class UserController {
     return this.notificationClient.send(
       { cmd: 'get_user_notifications' },
       { userId }
+    );
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('address/me')
+  async getUserAddress(@CurrentUserId() userId: string) {
+    return await firstValueFrom(
+      this.usersClient.send({ cmd: 'getUserAddress' }, userId),
+    );
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('address/update')
+  async updateUserAddress(
+    @Body() addressDto: UpdateAddressDto,
+    @CurrentUserId() userId: string,
+  ) {
+    return await firstValueFrom(
+      this.usersClient.send(
+        { cmd: 'updateUserAddress' },
+        { userId, addressDto },
+      ),
     );
   }
 }

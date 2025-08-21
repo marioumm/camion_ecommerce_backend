@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import {
@@ -180,6 +181,18 @@ export class UsersServiceController {
     } catch (error) {
       throw mapException(error);
     }
+  }
+
+
+
+  @MessagePattern({ cmd: 'getUserAddress' })
+  async getUserAddress(@Payload() userId: string) {
+    return this.usersService.getUserAddress(userId);
+  }
+
+  @MessagePattern({ cmd: 'updateUserAddress' })
+  async updateUserAddress(@Payload() data: { userId: string; addressDto: any }) {
+    return this.usersService.updateUserAddress(data.userId, data.addressDto);
   }
 
 }

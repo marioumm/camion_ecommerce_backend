@@ -45,6 +45,30 @@ export class User {
   @Column({ nullable: true })
   notificationToken?: string;
 
+  @Column({ type: 'jsonb', nullable: true })
+  address?: {
+    first_name: string;
+    last_name: string;
+    email: string;
+    phone: string;
+    address_1: string;
+    address_2?: string;
+    city: string;
+    state: string;
+    postcode: string;
+    country: string;
+    shipping_address?: any;
+    shipping_option?: {
+      method_id: string;
+      method_title: string;
+      cost: string;
+    };
+  };
+
+  @Column({ default: true })
+  isFirstLogin: boolean;
+
+
   @CreateDateColumn({ type: 'timestamp' })
   createdAt: Date;
 

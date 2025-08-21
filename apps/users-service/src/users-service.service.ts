@@ -23,6 +23,7 @@ import { FilterUsersDto } from './dto/filter-users.dto';
 import { CreateUserDto } from './dto/create-user.dto';
 import * as bcrypt from 'bcrypt';
 import { LoginAdminDto } from './dto/login-admin.dto';
+import { UpdateAddressDto } from './dto/update-address.dto';
 
 @Injectable()
 export class UsersService {
@@ -56,7 +57,6 @@ export class UsersService {
       });
     }
   }
-
 
   async saveNotificationToken(userId: string, token: string) {
     const user = await this.userRepository.findOne({ where: { id: userId } });
@@ -215,44 +215,52 @@ export class UsersService {
     }
   }
 
-  async verifyOTP(dto: VerifyDto) {
-    try {
-      if (!dto.email || !dto.phone) {
-        throw new RpcException({
-          statusCode: 400,
-          message: 'Email and phone are required',
-        });
-      }
+ async verifyOTP(dto: VerifyDto) {
+  try {
+    if (!dto.email || !dto.phone) {
+      throw new RpcException({
+        statusCode: 400,
+        message: 'Email and phone are required',
+      });
+    }
 
-      const user = await this.userRepository.findOne({
-        where: { email: dto.email, phone: dto.phone },
+    const user = await this.userRepository.findOne({
+      where: { email: dto.email, phone: dto.phone },
+    });
+
+    if (!user)
+      throw new RpcException({
+        statusCode: 401,
+        message: 'Invalid credentials',
+      });
+    if (user.code !== dto.code)
+      throw new RpcException({
+        statusCode: 401,
+        message: 'Invalid OTP code',
       });
 
-      if (!user)
-        throw new RpcException({
-          statusCode: 401,
-          message: 'Invalid credentials',
-        });
-      if (user.code !== dto.code)
-        throw new RpcException({
-          statusCode: 401,
-          message: 'Invalid OTP code',
-        });
+    user.code = '';
 
-      user.code = '';
+    const isFirstLogin = user.isFirstLogin;
+
+    if (user.isFirstLogin) {
+      user.isFirstLogin = false;
       await this.userRepository.save(user);
-      const payload = {
-        sub: user.id,
-        email: user.email,
-        phone: user.phone,
-        role: user.role,
-      };
-      const token = this.jwtService.sign(payload);
-      return { accessToken: token, user };
-    } catch (error) {
-      throw toRpc(error, 'OTP verification failed');
     }
+
+    const payload = {
+      sub: user.id,
+      email: user.email,
+      phone: user.phone,
+      role: user.role,
+    };
+    const token = this.jwtService.sign(payload);
+    return { accessToken: token, user, isFirstLogin };
+  } catch (error) {
+    throw toRpc(error, 'OTP verification failed');
   }
+}
+
 
   async createUser(dto: CreateUserDto): Promise<User> {
     try {
@@ -415,6 +423,25 @@ export class UsersService {
     const token = this.jwtService.sign(payload);
     return { token };
   }
+
+
+async getUserAddress(userId: string): Promise<any> {
+  const user = await this.userRepository.findOne({ where: { id: userId } });
+  if (!user) {
+    throw new RpcException({ statusCode: 404, message: 'User not found' });
+  }
+  return user.address || null;
+}
+
+async updateUserAddress(userId: string, addressDto: UpdateAddressDto): Promise<any> {
+  const user = await this.userRepository.findOne({ where: { id: userId } });
+  if (!user) {
+    throw new RpcException({ statusCode: 404, message: 'User not found' });
+  }
+  user.address = addressDto;
+  return this.userRepository.save(user);
+}
+
 }
 
 
