@@ -84,10 +84,12 @@ var ReviewsService = /** @class */ (function () {
                         return [4 /*yield*/, rxjs_1.firstValueFrom(this.ordersClient.send('get_order_with_items', { orderId: orderId, userId: userId }))];
                     case 3:
                         order = _a.sent();
+                        this.logger.debug("Order fetched: " + JSON.stringify(order));
                         if (!order || !(order.isDelivered || order.wcOrderStatus === 'completed')) {
                             throw new common_1.ForbiddenException("You cannot review this product - order not delivered yet");
                         }
                         hasProduct = order.items.some(function (item) { return item.productId === woocommerceProductId; });
+                        this.logger.debug("Order contains product? " + hasProduct);
                         if (!hasProduct) {
                             throw new common_1.ForbiddenException('You did not purchase this product');
                         }
@@ -230,31 +232,39 @@ var ReviewsService = /** @class */ (function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
-                        _a.trys.push([0, 4, , 5]);
-                        return [4 /*yield*/, this.buckyDropService.getProduct(woocommerceProductId)];
+                        this.logger.debug("Checking review permission for userId=" + userId + ", productId=" + woocommerceProductId);
+                        _a.label = 1;
                     case 1:
-                        product = _a.sent();
-                        if (!product)
-                            return [2 /*return*/, false];
-                        return [4 /*yield*/, rxjs_1.firstValueFrom(this.ordersClient.send('get_user_completed_orders', { userId: userId }))];
+                        _a.trys.push([1, 5, , 6]);
+                        return [4 /*yield*/, this.buckyDropService.getProduct(woocommerceProductId)];
                     case 2:
+                        product = _a.sent();
+                        if (!product) {
+                            this.logger.debug('Product not found in BuckyDrop service');
+                            return [2 /*return*/, false];
+                        }
+                        return [4 /*yield*/, rxjs_1.firstValueFrom(this.ordersClient.send('get_user_completed_orders', { userId: userId }))];
+                    case 3:
                         completedOrders = _a.sent();
+                        this.logger.debug("Completed orders fetched: " + JSON.stringify(completedOrders));
                         hasPurchased = completedOrders.some(function (order) {
                             return order.items.some(function (item) { return item.productId === woocommerceProductId; });
                         });
+                        this.logger.debug("Has purchased product? " + hasPurchased);
                         if (!hasPurchased)
                             return [2 /*return*/, false];
                         return [4 /*yield*/, this.reviewRepository.findOne({
                                 where: { userId: userId, woocommerceProductId: woocommerceProductId }
                             })];
-                    case 3:
-                        existingReview = _a.sent();
-                        return [2 /*return*/, !existingReview];
                     case 4:
+                        existingReview = _a.sent();
+                        this.logger.debug("Existing review found? " + (existingReview ? 'YES' : 'NO'));
+                        return [2 /*return*/, !existingReview];
+                    case 5:
                         error_4 = _a.sent();
                         this.logger.error('Error checking review permission:', error_4.message);
                         return [2 /*return*/, false];
-                    case 5: return [2 /*return*/];
+                    case 6: return [2 /*return*/];
                 }
             });
         });

@@ -26,7 +26,7 @@ export class ReviewsService {
     @Inject('ORDERS_SERVICE')
     private ordersClient: ClientProxy,
     private readonly buckyDropService: BuckyDropHttpService,
-  ) {}
+  ) { }
 
   async createReview(userId: string, createReviewDto: CreateReviewDto) {
     const { woocommerceProductId, orderId, rating, comment } = createReviewDto;
@@ -41,14 +41,14 @@ export class ReviewsService {
         this.ordersClient.send('get_order_with_items', { orderId, userId })
       );
 
-    if (!order || !(order.isDelivered || order.wcOrderStatus === 'completed')) {
-  throw new ForbiddenException("You cannot review this product - order not delivered yet");
-    }
+      this.logger.debug(`Order fetched: ${JSON.stringify(order)}`);
 
+      if (!order || !(order.isDelivered || order.wcOrderStatus === 'completed')) {
+        throw new ForbiddenException("You cannot review this product - order not delivered yet");
+      }
 
-      const hasProduct = order.items.some(
-        (item: any) => item.productId  === woocommerceProductId
-      );
+      const hasProduct = order.items.some((item: any) => item.productId === woocommerceProductId);
+      this.logger.debug(`Order contains product? ${hasProduct}`);
 
       if (!hasProduct) {
         throw new ForbiddenException('You did not purchase this product');
@@ -91,7 +91,7 @@ export class ReviewsService {
 
       return await this.reviewRepository.findOne({
         where: { id: savedReview.id },
-        relations: ['comments'] 
+        relations: ['comments']
       });
 
     } catch (error) {
@@ -131,7 +131,7 @@ export class ReviewsService {
     try {
       const [reviews, total] = await this.reviewRepository.findAndCount({
         where: { woocommerceProductId, isActive: true },
-        relations: ['comments'], 
+        relations: ['comments'],
         order: { createdAt: 'DESC' },
         skip: (page - 1) * limit,
         take: limit,
@@ -164,23 +164,34 @@ export class ReviewsService {
   }
 
   async canUserReview(userId: string, woocommerceProductId: number): Promise<boolean> {
+    this.logger.debug(`Checking review permission for userId=${userId}, productId=${woocommerceProductId}`);
+
     try {
       const product = await this.buckyDropService.getProduct(woocommerceProductId);
-      if (!product) return false;
+      if (!product) {
+        this.logger.debug('Product not found in BuckyDrop service');
+        return false;
+      }
 
       const completedOrders = await firstValueFrom(
         this.ordersClient.send('get_user_completed_orders', { userId })
       );
 
+      this.logger.debug(`Completed orders fetched: ${JSON.stringify(completedOrders)}`);
+
       const hasPurchased = completedOrders.some((order: any) =>
-        order.items.some((item: any) => item.productId  === woocommerceProductId)
+        order.items.some((item: any) => item.productId === woocommerceProductId)
       );
+
+      this.logger.debug(`Has purchased product? ${hasPurchased}`);
 
       if (!hasPurchased) return false;
 
       const existingReview = await this.reviewRepository.findOne({
         where: { userId, woocommerceProductId }
       });
+
+      this.logger.debug(`Existing review found? ${existingReview ? 'YES' : 'NO'}`);
 
       return !existingReview;
 
