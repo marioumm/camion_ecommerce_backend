@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
@@ -26,6 +27,8 @@ export class OrdersController {
     private readonly ordersService: OrdersService,
     @InjectRepository(CartItem)
     private readonly cartRepository: Repository<CartItem>,
+      @InjectRepository(Order) 
+    private readonly orderRepository: Repository<Order>,
   ) { }
 
   @MessagePattern({ cmd: 'create_order' })
@@ -154,11 +157,45 @@ export class OrdersController {
     }
   }
 
+  @MessagePattern('get_order_with_items')
+async getOrderWithItems(@Payload() data: { orderId: string; userId: string }) {
+  const order = await this.orderRepository.findOne({
+    where: { id: data.orderId, userId: data.userId },
+  });
+
+  return order ? {
+    id: order.id,
+    userId: order.userId,
+    status: order.isDelivered ? 'delivered' : (order.isPaid ? 'paid' : order.wcOrderStatus),
+    isDelivered: order.isDelivered,
+    isPaid: order.isPaid,
+    items: Array.isArray(order.items) ? order.items : [],
+  } : null;
+}
+
+@MessagePattern('get_user_completed_orders')
+async getUserCompletedOrders(@Payload() data: { userId: string }) {
+  const orders = await this.orderRepository.find({
+    where: { userId: data.userId, isDelivered: true },
+  });
+
+  return orders.map(order => ({
+    id: order.id,
+    userId: order.userId,
+    status: 'delivered',
+    isDelivered: order.isDelivered,
+    isPaid: order.isPaid,
+    deliveredAt: order.deliveredAt,
+    items: Array.isArray(order.items) ? order.items : [],
+  }));
+}
+
+
 
   mapOrderResponse(order: Order) {
     return {
       id: order.id,
-      wcOrderId: order.wcOrderId, // ✅ ده اللي محتاجه للـ tracking!
+      wcOrderId: order.wcOrderId,
       userId: order.userId,
       wcOrderStatus: order.wcOrderStatus,
       wcPaymentStatus: order.wcPaymentStatus,
@@ -177,7 +214,6 @@ export class OrdersController {
       skipCashPaymentUrl: order.skipCashPaymentUrl,
       skipCashTransactionId: order.skipCashTransactionId,
 
-      // ✅ معلومات إضافية للفرونت إند
       customerName: `${order.customerData.first_name} ${order.customerData.last_name}`,
       customerEmail: order.customerData.email,
       customerPhone: order.customerData.phone,

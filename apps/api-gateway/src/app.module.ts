@@ -9,6 +9,7 @@ import { AuthModule } from "@app/auth";
 import { OrdersController } from "./controllers/order.controller";
 import { HealthController } from "./controllers/health.controller";
 import { WebhookController } from "./controllers/webhook.controller";
+import { ReviewsController } from "./controllers/reviews.controller";
 
 @Module({
   imports: [
@@ -84,6 +85,17 @@ import { WebhookController } from "./controllers/webhook.controller";
         }),
         inject: [ConfigService],
       },
+      {
+        name: 'REVIEWS_SERVICE',
+        useFactory: (config: ConfigService) => ({
+          transport: Transport.TCP,
+          options: {
+            host: config.get('REVIEWS_SERVICE_HOST'),
+            port: Number(config.get('REVIEWS_TCP_PORT')),
+          },
+        }),
+        inject: [ConfigService],
+      },
     ]),
     AuthModule
   ],
@@ -94,6 +106,7 @@ import { WebhookController } from "./controllers/webhook.controller";
     AffiliateController,
     WishlistController,
     WebhookController,
+    ReviewsController,
     HealthController
   ],
 })

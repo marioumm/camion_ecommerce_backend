@@ -112,6 +112,21 @@ services:
       - backend
     depends_on:
       - postgres_db
+    
+  reviews-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: node dist/apps/reviews-service/main
+    container_name: reviews-service
+    env_file:
+      - .env
+    ports:
+      - "${REVIEWS_TCP_PORT}:${REVIEWS_TCP_PORT}"
+    networks:
+      - backend
+    depends_on:
+      - postgres_db
 
   api-gateway:
     build:

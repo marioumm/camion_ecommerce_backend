@@ -21,7 +21,7 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
       autoLoadEntities: true,
       synchronize: true,
     }),
-    TypeOrmModule.forFeature([Order, CartItem]),
+    TypeOrmModule.forFeature([Order,CartItem]),
     AuthModule,
     ClientsModule.registerAsync([
       {
