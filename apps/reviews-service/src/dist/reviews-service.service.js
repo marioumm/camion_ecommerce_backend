@@ -87,7 +87,7 @@ var ReviewsService = /** @class */ (function () {
                         if (!order || !(order.isDelivered || order.wcOrderStatus === 'completed')) {
                             throw new common_1.ForbiddenException("You cannot review this product - order not delivered yet");
                         }
-                        hasProduct = order.items.some(function (item) { return item.woocommerceProductId === woocommerceProductId; });
+                        hasProduct = order.items.some(function (item) { return item.productId === woocommerceProductId; });
                         if (!hasProduct) {
                             throw new common_1.ForbiddenException('You did not purchase this product');
                         }
@@ -240,7 +240,7 @@ var ReviewsService = /** @class */ (function () {
                     case 2:
                         completedOrders = _a.sent();
                         hasPurchased = completedOrders.some(function (order) {
-                            return order.items.some(function (item) { return item.woocommerceProductId === woocommerceProductId; });
+                            return order.items.some(function (item) { return item.productId === woocommerceProductId; });
                         });
                         if (!hasPurchased)
                             return [2 /*return*/, false];

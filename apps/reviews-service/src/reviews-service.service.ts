@@ -47,7 +47,7 @@ export class ReviewsService {
 
 
       const hasProduct = order.items.some(
-        (item: any) => item.woocommerceProductId === woocommerceProductId
+        (item: any) => item.productId  === woocommerceProductId
       );
 
       if (!hasProduct) {
@@ -173,7 +173,7 @@ export class ReviewsService {
       );
 
       const hasPurchased = completedOrders.some((order: any) =>
-        order.items.some((item: any) => item.woocommerceProductId === woocommerceProductId)
+        order.items.some((item: any) => item.productId  === woocommerceProductId)
       );
 
       if (!hasPurchased) return false;
