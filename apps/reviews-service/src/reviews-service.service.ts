@@ -41,9 +41,10 @@ export class ReviewsService {
         this.ordersClient.send('get_order_with_items', { orderId, userId })
       );
 
-      if (!order || !order.isDelivered) {
-        throw new ForbiddenException('You cannot review this product - order not delivered yet');
-      }
+    if (!order || !(order.isDelivered || order.wcOrderStatus === 'completed')) {
+  throw new ForbiddenException("You cannot review this product - order not delivered yet");
+    }
+
 
       const hasProduct = order.items.some(
         (item: any) => item.woocommerceProductId === woocommerceProductId

@@ -84,8 +84,8 @@ var ReviewsService = /** @class */ (function () {
                         return [4 /*yield*/, rxjs_1.firstValueFrom(this.ordersClient.send('get_order_with_items', { orderId: orderId, userId: userId }))];
                     case 3:
                         order = _a.sent();
-                        if (!order || !order.isDelivered) {
-                            throw new common_1.ForbiddenException('You cannot review this product - order not delivered yet');
+                        if (!order || !(order.isDelivered || order.wcOrderStatus === 'completed')) {
+                            throw new common_1.ForbiddenException("You cannot review this product - order not delivered yet");
                         }
                         hasProduct = order.items.some(function (item) { return item.woocommerceProductId === woocommerceProductId; });
                         if (!hasProduct) {
