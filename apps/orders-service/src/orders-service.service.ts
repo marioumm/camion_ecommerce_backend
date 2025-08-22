@@ -80,7 +80,7 @@ export class OrdersService {
       const order_data = {
         line_items: wcItems,
         customer_data: dto.customer_data,
-        payment_method: "skipcash",
+        payment_method: "cod",
         payment_data: dto.payment_data,
       };
 

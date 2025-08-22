@@ -19,6 +19,12 @@ class ShippingAddressDto {
   @IsString()
   last_name: string;
 
+  @IsEmail()
+  email: string;
+
+  @IsString()
+  phone: string;
+
   @IsString()
   address_1: string;
 
