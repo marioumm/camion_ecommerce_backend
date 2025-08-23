@@ -51,7 +51,7 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
         useFactory: (config: ConfigService) => ({
           transport: Transport.TCP,
           options: {
-            host: config.get('AFFILIATE_SERVICE_HOST'),
+            host: config.get('AFFILIATE_HOST'),
             port: Number(config.get('AFFILIATE_TCP_PORT')),
           },
         }),

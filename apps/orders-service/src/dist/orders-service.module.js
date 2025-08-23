@@ -63,7 +63,7 @@ var OrdersServiceModule = /** @class */ (function () {
                         useFactory: function (config) { return ({
                             transport: microservices_1.Transport.TCP,
                             options: {
-                                host: config.get('AFFILIATE_SERVICE_HOST'),
+                                host: config.get('AFFILIATE_HOST'),
                                 port: Number(config.get('AFFILIATE_TCP_PORT'))
                             }
                         }); },
