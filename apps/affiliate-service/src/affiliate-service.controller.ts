@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import {
@@ -173,6 +171,11 @@ export class AffiliateServiceController {
     } catch (err) {
       throw mapException(err);
     }
+  }
+
+  @MessagePattern({ cmd: 'affiliate.getCouponByCode' })
+  async getCouponByCode(@Payload() data: { code: string }) {
+    return this.affiliateService.getCouponByCode(data.code);
   }
 
 }

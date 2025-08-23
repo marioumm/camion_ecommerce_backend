@@ -57,8 +57,6 @@ var __rest = (this && this.__rest) || function (s, e) {
 };
 exports.__esModule = true;
 exports.AffiliateServiceController = void 0;
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 var common_1 = require("@nestjs/common");
@@ -323,6 +321,13 @@ var AffiliateServiceController = /** @class */ (function () {
             });
         });
     };
+    AffiliateServiceController.prototype.getCouponByCode = function (data) {
+        return __awaiter(this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                return [2 /*return*/, this.affiliateService.getCouponByCode(data.code)];
+            });
+        });
+    };
     __decorate([
         microservices_1.MessagePattern({ cmd: 'create_affiliate_request' }),
         __param(0, microservices_1.Payload())
@@ -376,6 +381,10 @@ var AffiliateServiceController = /** @class */ (function () {
         microservices_1.MessagePattern({ cmd: 'affiliate.getWalletTransactions' }),
         __param(0, microservices_1.Payload())
     ], AffiliateServiceController.prototype, "handleGetWalletTransactions");
+    __decorate([
+        microservices_1.MessagePattern({ cmd: 'affiliate.getCouponByCode' }),
+        __param(0, microservices_1.Payload())
+    ], AffiliateServiceController.prototype, "getCouponByCode");
     AffiliateServiceController = __decorate([
         common_1.UsePipes(new common_1.ValidationPipe({
             exceptionFactory: function (errors) {
