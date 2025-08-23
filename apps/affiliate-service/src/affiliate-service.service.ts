@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
@@ -18,6 +19,7 @@ import { SearchCouponsDto } from './dto/search-coupons.dto';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { UserRole } from 'apps/users-service/src/entities/user.entity';
 import { catchError, firstValueFrom, timeout } from 'rxjs';
+import { AffiliateTransaction } from './entities/affiliate_transactions.entity';
 
 @Injectable()
 export class AffiliateServiceService {
@@ -28,6 +30,8 @@ export class AffiliateServiceService {
     private readonly affiliateRepository: Repository<Affiliate>,
     @InjectRepository(Coupon)
     private readonly couponRepository: Repository<Coupon>,
+    @InjectRepository(AffiliateTransaction) 
+    private readonly affiliateTransactionRepository: Repository<AffiliateTransaction>,
     @Inject('USER_SERVICE') private readonly userClient: ClientProxy,
     @Inject('NOTIFICATIONS_SERVICE') private readonly notificationsClient: ClientProxy,
   ) { }
@@ -315,6 +319,64 @@ export class AffiliateServiceService {
     }
   }
 
+  async addAffiliateCommission(couponCode: string, saleAmount: number) {
+    const coupon = await this.couponRepository.findOne({
+      where: { code: couponCode, isActive: true },
+      relations: ['affiliate'],
+    });
+
+    if (!coupon || !coupon.affiliate) {
+      throw new RpcException({ statusCode: 404, message: 'Coupon or affiliate not found' });
+    }
+
+    const affiliate = coupon.affiliate;
+
+    const commission = saleAmount * 0.2;
+
+    affiliate.walletBalance += commission;
+
+    await this.affiliateRepository.save(affiliate);
+
+    const transaction = this.affiliateTransactionRepository.create({
+      affiliate,
+      amount: commission,
+      description: `Commission from coupon ${couponCode} on sale ${saleAmount}`
+    });
+
+    await this.affiliateTransactionRepository.save(transaction);
+
+    await this.sendNotification(
+      affiliate.userId,
+      'New Commission Added',
+      `You earned a commission of ${commission.toFixed(2)} from a sale using your coupon ${couponCode}.`
+    );
+
+    return { commission, walletBalance: affiliate.walletBalance };
+  }
+
+  async getWalletBalance(userId: string) {
+    const affiliate = await this.affiliateRepository.findOne({ where: { userId } });
+    if (!affiliate) throw new RpcException({ statusCode: 404, message: 'Affiliate not found' });
+    return {
+      walletBalance: affiliate.walletBalance,
+    };
+  }
+
+  async getWalletTransactions(userId: string) {
+    const affiliate = await this.affiliateRepository.findOne({
+      where: { userId },
+      relations: ['transactions'],
+    });
+    if (!affiliate) throw new RpcException({ statusCode: 404, message: 'Affiliate not found' });
+
+    return affiliate.transactions.map(txn => ({
+      id: txn.id,
+      amount: txn.amount,
+      description: txn.description,
+      createdAt: txn.createdAt,
+    }));
+  }
+
   async updateAffiliate(dto: UpdateAffiliateDto) {
     try {
       const affiliate = await this.affiliateRepository.findOne({ where: { id: dto.id } });
@@ -357,4 +419,6 @@ export class AffiliateServiceService {
       throw new RpcException({ statusCode: 500, message: error?.message || 'Failed to delete affiliate' });
     }
   }
+
+
 }

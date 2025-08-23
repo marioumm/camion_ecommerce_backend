@@ -7,6 +7,7 @@ import { Affiliate } from './entities/affiliate.entity';
 import { Coupon } from './entities/coupon.entity';
 import { AuthModule } from '@app/auth';
 import { ClientsModule, Transport } from '@nestjs/microservices';
+import { AffiliateTransaction } from './entities/affiliate_transactions.entity';
 
 @Module({
   imports: [
@@ -21,7 +22,7 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
       autoLoadEntities: true,
       synchronize: true,
     }),
-    TypeOrmModule.forFeature([Affiliate, Coupon]),
+    TypeOrmModule.forFeature([Affiliate, Coupon , AffiliateTransaction]),
     AuthModule,
 
     ClientsModule.register([

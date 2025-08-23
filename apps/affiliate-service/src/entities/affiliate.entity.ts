@@ -1,5 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany } from 'typeorm';
 import { Coupon } from './coupon.entity';
+import { AffiliateTransaction } from './affiliate_transactions.entity';
 
 export enum AffiliateStatus {
   PENDING = 'pending',
@@ -39,6 +40,11 @@ export class Affiliate {
   @Column({ nullable: true })
   referralLink: string;
 
+  @Column({ type: 'float', default: 0 })
+  walletBalance: number;
+
+  @OneToMany(() => AffiliateTransaction, (transaction) => transaction.affiliate)
+  transactions: AffiliateTransaction[];
 
   @OneToMany(() => Coupon, (coupon) => coupon.affiliate)
   coupons: Coupon[];

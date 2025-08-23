@@ -310,12 +310,20 @@ export class CartServiceService {
   async applyCouponToCart(userId: string, couponCode: string) {
     try {
       await this.verifyUserExists(userId);
+
       const cartItems = await this.cartRepository.find({ where: { userId } });
       if (!cartItems.length) throw new NotFoundException('Cart is empty');
 
       const coupon = await this.fetchCoupon(couponCode);
-
       if (!coupon) throw new NotFoundException('Invalid coupon code');
+
+      await Promise.all(
+        cartItems.map(async (item) => {
+          item.couponCode = couponCode;
+          item.discountPercentage = coupon.discountPercentage;
+          await this.cartRepository.save(item);
+        })
+      );
 
       const total = cartItems.reduce((sum, i) => {
         const priceNum = i.price ? parseFloat(i.price) : 0;
@@ -338,4 +346,5 @@ export class CartServiceService {
       throw new InternalServerErrorException('Failed to apply coupon');
     }
   }
+
 }

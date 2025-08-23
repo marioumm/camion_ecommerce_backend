@@ -46,6 +46,17 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
         }),
         inject: [ConfigService],
       },
+      {
+        name: 'AFFILIATE_SERVICE',
+        useFactory: (config: ConfigService) => ({
+          transport: Transport.TCP,
+          options: {
+            host: config.get('AFFILIATE_SERVICE_HOST'),
+            port: Number(config.get('AFFILIATE_TCP_PORT')),
+          },
+        }),
+        inject: [ConfigService],
+      },
     ]),
   ],
   controllers: [OrdersController],

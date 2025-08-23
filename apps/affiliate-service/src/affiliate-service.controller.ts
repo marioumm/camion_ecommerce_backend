@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import {
@@ -143,4 +145,34 @@ export class AffiliateServiceController {
       throw mapException(error);
     }
   }
+
+  @MessagePattern('affiliate.addCommission')
+  async handleAddCommission(data: { couponCode: string; saleAmount: number }) {
+    try {
+      const { couponCode, saleAmount } = data;
+      return await this.affiliateService.addAffiliateCommission(couponCode, saleAmount);
+    } catch (error) {
+      throw mapException(error);
+    }
+
+  }
+
+  @MessagePattern({ cmd: 'affiliate.getWalletBalance' })
+  async handleGetWalletBalance(@Payload() data: { userId: string }) {
+    try {
+      return await this.affiliateService.getWalletBalance(data.userId);
+    } catch (err) {
+      throw mapException(err);
+    }
+  }
+
+  @MessagePattern({ cmd: 'affiliate.getWalletTransactions' })
+  async handleGetWalletTransactions(@Payload() data: { userId: string }) {
+    try {
+      return await this.affiliateService.getWalletTransactions(data.userId);
+    } catch (err) {
+      throw mapException(err);
+    }
+  }
+
 }

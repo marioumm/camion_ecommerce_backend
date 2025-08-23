@@ -105,4 +105,19 @@ export class AffiliateController {
   getAllCoupons() {
     return this.affiliateClient.send({ cmd: 'get_all_coupons' }, {});
   }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.AFFILIATE)
+  @Get('wallet')
+  getWalletBalance(@CurrentUserId() userId: string) {
+    return this.affiliateClient.send({ cmd: 'affiliate.getWalletBalance' }, { userId });
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.AFFILIATE)
+  @Get('wallet/transactions')
+  getWalletTransactions(@CurrentUserId() userId: string) {
+    return this.affiliateClient.send({ cmd: 'affiliate.getWalletTransactions' }, { userId });
+  }
+
 }

@@ -23,7 +23,6 @@ export class CartItem {
   @Column('json', { default: () => "'[]'" })
   variation: { attribute: string; value: string }[];
 
-
   @Column({ nullable: true })
   title?: string;
 

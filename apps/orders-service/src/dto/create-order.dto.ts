@@ -50,7 +50,10 @@ class CustomerDataDto {
 
   @IsOptional()
   @IsString()
-  phone?: string ;
+  phone?: string;
+
+  couponCode?: string
+
 
   @IsOptional()
   @IsString()

@@ -70,10 +70,11 @@ var axios_1 = require("axios");
 var crypto = require("crypto");
 var rxjs_1 = require("rxjs");
 var OrdersService = /** @class */ (function () {
-    function OrdersService(orderRepository, notificationsClient, usersClient) {
+    function OrdersService(orderRepository, notificationsClient, usersClient, affiliateClient) {
         this.orderRepository = orderRepository;
         this.notificationsClient = notificationsClient;
         this.usersClient = usersClient;
+        this.affiliateClient = affiliateClient;
         this.logger = new common_1.Logger(OrdersService_1.name);
         this.WC_BASE_URL = process.env.WC_BASE_URL;
         this.SKIPCASH_BASE_URL = process.env.SKIPCASH_BASE_URL;
@@ -251,12 +252,12 @@ var OrdersService = /** @class */ (function () {
     };
     OrdersService.prototype.createOrder = function (userId, items, dto) {
         return __awaiter(this, void 0, Promise, function () {
-            var customerData, updatedDto, res, totalOrderPrice, currency, skipCashPayment, order, error_4;
+            var customerData, updatedDto, res, totalOrderPrice, currency, skipCashPayment, order, couponCode, err_2, error_4;
             var _this = this;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
-                        _a.trys.push([0, 9, , 10]);
+                        _a.trys.push([0, 13, , 14]);
                         customerData = dto.customer_data;
                         if (!!customerData) return [3 /*break*/, 2];
                         return [4 /*yield*/, rxjs_1.firstValueFrom(this.usersClient.send({ cmd: 'getUserAddress' }, userId).pipe(rxjs_1.timeout(3000), rxjs_1.catchError(function () {
@@ -305,14 +306,30 @@ var OrdersService = /** @class */ (function () {
                         return [4 /*yield*/, this.orderRepository.save(order)];
                     case 7:
                         _a.sent();
-                        return [4 /*yield*/, this.sendNotification(userId, 'Order Created 🛒', "Your order (" + order.wcOrderId + ") has been created successfully.")];
+                        couponCode = items.length > 0 ? items[0].couponCode : undefined;
+                        if (!couponCode) return [3 /*break*/, 11];
+                        _a.label = 8;
                     case 8:
+                        _a.trys.push([8, 10, , 11]);
+                        return [4 /*yield*/, rxjs_1.firstValueFrom(this.affiliateClient.send('affiliate.addCommission', {
+                                couponCode: couponCode,
+                                saleAmount: totalOrderPrice
+                            }).pipe(rxjs_1.timeout(5000)))];
+                    case 9:
+                        _a.sent();
+                        return [3 /*break*/, 11];
+                    case 10:
+                        err_2 = _a.sent();
+                        this.logger.warn("Failed to add affiliate commission: " + (err_2.message || err_2));
+                        return [3 /*break*/, 11];
+                    case 11: return [4 /*yield*/, this.sendNotification(userId, 'Order Created 🛒', "Your order (" + order.wcOrderId + ") has been created successfully.")];
+                    case 12:
                         _a.sent();
                         return [2 /*return*/, order];
-                    case 9:
+                    case 13:
                         error_4 = _a.sent();
                         throw toRpc(error_4, 'Failed to create order');
-                    case 10: return [2 /*return*/];
+                    case 14: return [2 /*return*/];
                 }
             });
         });
@@ -565,7 +582,8 @@ var OrdersService = /** @class */ (function () {
         common_1.Injectable(),
         __param(0, typeorm_1.InjectRepository(order_entity_1.Order)),
         __param(1, common_1.Inject('NOTIFICATIONS_SERVICE')),
-        __param(2, common_1.Inject('USERS_SERVICE'))
+        __param(2, common_1.Inject('USERS_SERVICE')),
+        __param(3, common_1.Inject('AFFILIATE_SERVICE'))
     ], OrdersService);
     return OrdersService;
 }());

@@ -58,6 +58,17 @@ var OrdersServiceModule = /** @class */ (function () {
                         }); },
                         inject: [config_1.ConfigService]
                     },
+                    {
+                        name: 'AFFILIATE_SERVICE',
+                        useFactory: function (config) { return ({
+                            transport: microservices_1.Transport.TCP,
+                            options: {
+                                host: config.get('AFFILIATE_SERVICE_HOST'),
+                                port: Number(config.get('AFFILIATE_TCP_PORT'))
+                            }
+                        }); },
+                        inject: [config_1.ConfigService]
+                    },
                 ]),
             ],
             controllers: [orders_service_controller_1.OrdersController],
