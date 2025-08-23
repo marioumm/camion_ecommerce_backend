@@ -452,6 +452,7 @@ var AffiliateServiceService = /** @class */ (function () {
                         affiliate = coupon.affiliate;
                         commission = saleAmount * 0.2;
                         affiliate.walletBalance += commission;
+                        affiliate.totalEarnings += commission;
                         return [4 /*yield*/, this.affiliateRepository.save(affiliate)];
                     case 2:
                         _a.sent();

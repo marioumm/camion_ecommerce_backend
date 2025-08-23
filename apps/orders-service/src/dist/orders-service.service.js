@@ -251,13 +251,14 @@ var OrdersService = /** @class */ (function () {
         });
     };
     OrdersService.prototype.createOrder = function (userId, items, dto) {
+        var _a;
         return __awaiter(this, void 0, Promise, function () {
-            var customerData, updatedDto, res, totalOrderPrice, currency, skipCashPayment, order, couponCode, err_2, error_4;
+            var customerData, updatedDto, res, total, discountPercentage, discount, totalAfterDiscount, currency, skipCashPayment, order, couponCode, err_2, error_4;
             var _this = this;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
+            return __generator(this, function (_b) {
+                switch (_b.label) {
                     case 0:
-                        _a.trys.push([0, 13, , 14]);
+                        _b.trys.push([0, 13, , 14]);
                         customerData = dto.customer_data;
                         if (!!customerData) return [3 /*break*/, 2];
                         return [4 /*yield*/, rxjs_1.firstValueFrom(this.usersClient.send({ cmd: 'getUserAddress' }, userId).pipe(rxjs_1.timeout(3000), rxjs_1.catchError(function () {
@@ -265,34 +266,37 @@ var OrdersService = /** @class */ (function () {
                                 return [null];
                             })))];
                     case 1:
-                        customerData = _a.sent();
+                        customerData = _b.sent();
                         if (!customerData) {
                             throw new microservices_1.RpcException('User address data is required');
                         }
-                        _a.label = 2;
+                        _b.label = 2;
                     case 2:
                         if (!dto.customer_data) return [3 /*break*/, 4];
                         return [4 /*yield*/, rxjs_1.firstValueFrom(this.usersClient.send({ cmd: 'updateUserAddress' }, { userId: userId, addressDto: dto.customer_data }))];
                     case 3:
-                        _a.sent();
-                        _a.label = 4;
+                        _b.sent();
+                        _b.label = 4;
                     case 4:
                         updatedDto = __assign(__assign({}, dto), { customer_data: customerData });
                         return [4 /*yield*/, this.createWCOrder(updatedDto, items)];
                     case 5:
-                        res = _a.sent();
-                        totalOrderPrice = items.reduce(function (sum, item) { var _a, _b; return sum + (Number((_a = item.price) !== null && _a !== void 0 ? _a : 0) * Number((_b = item.quantity) !== null && _b !== void 0 ? _b : 1)); }, 0);
+                        res = _b.sent();
+                        total = items.reduce(function (sum, item) { var _a, _b; return sum + (Number((_a = item.price) !== null && _a !== void 0 ? _a : 0) * Number((_b = item.quantity) !== null && _b !== void 0 ? _b : 1)); }, 0);
+                        discountPercentage = items.length > 0 ? (_a = items[0].discountPercentage) !== null && _a !== void 0 ? _a : 0 : 0;
+                        discount = (total * discountPercentage) / 100;
+                        totalAfterDiscount = total - discount;
                         currency = res.data.currency || 'egp';
-                        return [4 /*yield*/, this.createSkipCashPayment(res.data.order_id, totalOrderPrice, currency, customerData)];
+                        return [4 /*yield*/, this.createSkipCashPayment(res.data.order_id, totalAfterDiscount, currency, customerData)];
                     case 6:
-                        skipCashPayment = _a.sent();
+                        skipCashPayment = _b.sent();
                         order = this.orderRepository.create({
                             wcOrderId: res.data.order_id,
                             wcOrderStatus: res.data.order_status,
                             wcPaymentStatus: res.data.payment_status,
                             wcOrderKey: res.data.order_key,
                             currency: currency,
-                            total: totalOrderPrice.toString(),
+                            total: totalAfterDiscount.toString(),
                             userId: userId,
                             items: items,
                             customerData: customerData,
@@ -305,29 +309,29 @@ var OrdersService = /** @class */ (function () {
                         });
                         return [4 /*yield*/, this.orderRepository.save(order)];
                     case 7:
-                        _a.sent();
+                        _b.sent();
                         couponCode = items.length > 0 ? items[0].couponCode : undefined;
                         if (!couponCode) return [3 /*break*/, 11];
-                        _a.label = 8;
+                        _b.label = 8;
                     case 8:
-                        _a.trys.push([8, 10, , 11]);
+                        _b.trys.push([8, 10, , 11]);
                         return [4 /*yield*/, rxjs_1.firstValueFrom(this.affiliateClient.send('affiliate.addCommission', {
                                 couponCode: couponCode,
-                                saleAmount: totalOrderPrice
+                                saleAmount: totalAfterDiscount
                             }).pipe(rxjs_1.timeout(5000)))];
                     case 9:
-                        _a.sent();
+                        _b.sent();
                         return [3 /*break*/, 11];
                     case 10:
-                        err_2 = _a.sent();
+                        err_2 = _b.sent();
                         this.logger.warn("Failed to add affiliate commission: " + (err_2.message || err_2));
                         return [3 /*break*/, 11];
                     case 11: return [4 /*yield*/, this.sendNotification(userId, 'Order Created 🛒', "Your order (" + order.wcOrderId + ") has been created successfully.")];
                     case 12:
-                        _a.sent();
+                        _b.sent();
                         return [2 /*return*/, order];
                     case 13:
-                        error_4 = _a.sent();
+                        error_4 = _b.sent();
                         throw toRpc(error_4, 'Failed to create order');
                     case 14: return [2 /*return*/];
                 }

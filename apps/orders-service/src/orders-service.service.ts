@@ -214,15 +214,20 @@ export class OrdersService {
 
       const res = await this.createWCOrder(updatedDto, items);
 
-      const totalOrderPrice = items.reduce(
+      const total = items.reduce(
         (sum: number, item) => sum + (Number(item.price ?? 0) * Number(item.quantity ?? 1)),
         0,
       );
+
+      const discountPercentage = items.length > 0 ? items[0].discountPercentage ?? 0 : 0;
+      const discount = (total * discountPercentage) / 100;
+      const totalAfterDiscount = total - discount;
+
       const currency = res.data.currency || 'egp';
 
       const skipCashPayment = await this.createSkipCashPayment(
         res.data.order_id,
-        totalOrderPrice,
+        totalAfterDiscount,
         currency,
         customerData,
       );
@@ -233,7 +238,7 @@ export class OrdersService {
         wcPaymentStatus: res.data.payment_status,
         wcOrderKey: res.data.order_key,
         currency,
-        total: totalOrderPrice.toString(),
+        total: totalAfterDiscount.toString(),
         userId,
         items,
         customerData,
@@ -253,7 +258,7 @@ export class OrdersService {
           await firstValueFrom(
             this.affiliateClient.send('affiliate.addCommission', {
               couponCode,
-              saleAmount: totalOrderPrice,
+              saleAmount: totalAfterDiscount,
             }).pipe(timeout(5000)),
           );
         } catch (err) {
@@ -272,6 +277,7 @@ export class OrdersService {
       throw toRpc(error, 'Failed to create order');
     }
   }
+
 
   async getOrderById(id: string) {
     try {

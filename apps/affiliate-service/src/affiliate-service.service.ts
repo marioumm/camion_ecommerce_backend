@@ -318,40 +318,40 @@ export class AffiliateServiceService {
     }
   }
 
-  async addAffiliateCommission(couponCode: string, saleAmount: number) {
-    const coupon = await this.couponRepository.findOne({
-      where: { code: couponCode, isActive: true },
-      relations: ['affiliate'],
-    });
+ async addAffiliateCommission(couponCode: string, saleAmount: number) {
+  const coupon = await this.couponRepository.findOne({
+    where: { code: couponCode, isActive: true },
+    relations: ['affiliate'],
+  });
 
-    if (!coupon || !coupon.affiliate) {
-      throw new RpcException({ statusCode: 404, message: 'Coupon or affiliate not found' });
-    }
-
-    const affiliate = coupon.affiliate;
-
-    const commission = saleAmount * 0.2;
-
-    affiliate.walletBalance += commission;
-
-    await this.affiliateRepository.save(affiliate);
-
-    const transaction = this.affiliateTransactionRepository.create({
-      affiliate,
-      amount: commission,
-      description: `Commission from coupon ${couponCode} on sale ${saleAmount}`
-    });
-
-    await this.affiliateTransactionRepository.save(transaction);
-
-    await this.sendNotification(
-      affiliate.userId,
-      'New Commission Added',
-      `You earned a commission of ${commission.toFixed(2)} from a sale using your coupon ${couponCode}.`
-    );
-
-    return { commission, walletBalance: affiliate.walletBalance };
+  if (!coupon || !coupon.affiliate) {
+    throw new RpcException({ statusCode: 404, message: 'Coupon or affiliate not found' });
   }
+
+  const affiliate = coupon.affiliate;
+  const commission = saleAmount * 0.2;
+
+  affiliate.walletBalance += commission;
+  affiliate.totalEarnings += commission;
+
+  await this.affiliateRepository.save(affiliate);
+
+  const transaction = this.affiliateTransactionRepository.create({
+    affiliate,
+    amount: commission,
+    description: `Commission from coupon ${couponCode} on sale ${saleAmount}`,
+  });
+  await this.affiliateTransactionRepository.save(transaction);
+
+  await this.sendNotification(
+    affiliate.userId,
+    'New Commission Added',
+    `You earned a commission of ${commission.toFixed(2)} from a sale using your coupon ${couponCode}.`
+  );
+
+  return { commission, walletBalance: affiliate.walletBalance };
+}
+
 
   async getWalletBalance(userId: string) {
     const affiliate = await this.affiliateRepository.findOne({ where: { userId } });
