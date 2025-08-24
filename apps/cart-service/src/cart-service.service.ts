@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
@@ -16,7 +18,7 @@ import axios from 'axios';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
-import { firstValueFrom, timeout, catchError } from 'rxjs';
+import { firstValueFrom, timeout, catchError, of } from 'rxjs';
 import { AddToCartDto } from './dto/add-to-cart.dto';
 import { UpdateCartItemDto } from './dto/update-cart-item.dto';
 import { RemoveFromCartDto } from './dto/remove-from-cart.dto';
@@ -70,7 +72,6 @@ export class CartServiceService {
       this.logger.error('Error sending notification', err.stack);
     }
   }
-
 
   private async verifyUserExists(userId: string) {
     if (!userId) throw new UnauthorizedException('Missing User ID');
@@ -184,10 +185,40 @@ export class CartServiceService {
       if (!dto.quantity || dto.quantity <= 0)
         throw new BadRequestException('Quantity must be greater than 0');
 
+      const userPreferences = await firstValueFrom(
+        this.usersClient.send('get_user_preferences', { userId }).pipe(
+          timeout(3000),
+          catchError(() => of({
+            preferredCurrency: 'USD',
+            preferredLocale: 'en'
+          })),
+        ),
+      );
+
       const product = await this.fetchProductFromWoo(dto.productId);
 
       if (!product)
         throw new NotFoundException('Product not found in WooCommerce');
+
+      const convertedPrice = await firstValueFrom(
+        this.usersClient.send('convert_single_price', {
+          userId,
+          amount: parseFloat(product.price),
+          fromCurrency: 'QAR'
+        }).pipe(
+          timeout(5000),
+          catchError((err) => {
+            this.logger.warn(`Price conversion failed: ${err.message}`);
+            return of({
+              convertedAmount: parseFloat(product.price),
+              currency: 'QAR',
+              currencySymbol: 'ر.ق',
+              originalAmount: parseFloat(product.price),
+              originalCurrency: 'QAR'
+            });
+          })
+        )
+      );
 
       const existing = await this.cartRepository.findOne({
         where: { userId, productId: dto.productId },
@@ -198,7 +229,10 @@ export class CartServiceService {
         existing.quantity += dto.quantity;
         existing.title = product.title;
         existing.image = product.image;
-        existing.price = String(product.price);
+        existing.price = convertedPrice.convertedAmount.toString();
+        existing.currency = convertedPrice.currency;
+        existing.currencySymbol = convertedPrice.currencySymbol;
+        existing.originalPrice = product.price;
         savedItem = await this.cartRepository.save(existing);
       } else {
         savedItem = await this.cartRepository.save({
@@ -207,7 +241,10 @@ export class CartServiceService {
           quantity: dto.quantity,
           title: product.title,
           image: product.image,
-          price: String(product.price),
+          price: convertedPrice.convertedAmount.toString(),
+          currency: convertedPrice.currency,
+          currencySymbol: convertedPrice.currencySymbol,
+          originalPrice: product.price,
           variation: dto.variation,
         });
       }
@@ -217,10 +254,15 @@ export class CartServiceService {
       await this.sendNotification(
         userId,
         'Product added to cart successfully 🛒',
-        `${product.title} added to cart successfully.`
+        `${product.title} added for ${convertedPrice.convertedAmount} ${convertedPrice.currencySymbol}`
       );
 
-      return { ...savedItem, totalPrice };
+      return {
+        ...savedItem,
+        totalPrice,
+        formattedPrice: `${savedItem.price} ${savedItem.currencySymbol}`,
+        formattedTotal: `${totalPrice.toFixed(2)} ${savedItem.currencySymbol}`
+      };
     } catch (error) {
       if (
         error instanceof BadRequestException ||
@@ -233,6 +275,7 @@ export class CartServiceService {
       throw new InternalServerErrorException('Failed to add to cart');
     }
   }
+
 
   async isProductInCart(userId: string, productId: string) {
     await this.verifyUserExists(userId);
@@ -258,17 +301,46 @@ export class CartServiceService {
     const saved = await this.cartRepository.save(item);
     const totalPrice = Number(saved.price) * saved.quantity;
 
-    return { ...saved, totalPrice };
+    return {
+      ...saved,
+      totalPrice,
+      formattedPrice: `${saved.price} ${saved.currencySymbol}`,
+      formattedTotal: `${totalPrice.toFixed(2)} ${saved.currencySymbol}`
+    };
   }
+
 
   async getCart(userId: string) {
     await this.verifyUserExists(userId);
     const items = await this.cartRepository.find({ where: { userId } });
-    return items.map((item) => ({
-      ...item,
-      totalPrice: Number(item.price) * item.quantity,
-    }));
+
+    const enhancedItems = items.map(item => {
+      const itemTotal = Number(item.price || 0) * item.quantity;
+      return {
+        ...item,
+        formattedPrice: `${item.price} ${item.currencySymbol}`,
+        formattedOriginalPrice: `${item.originalPrice} ر.ق`,
+        itemTotal,
+        formattedItemTotal: `${itemTotal.toFixed(2)} ${item.currencySymbol}`
+      };
+    });
+
+    const grandTotal = enhancedItems.reduce((sum, item) => sum + item.itemTotal, 0);
+    const currency = items[0]?.currency || 'USD';
+    const currencySymbol = items[0]?.currencySymbol || '$';
+
+    return {
+      items: enhancedItems,
+      summary: {
+        totalItems: items.length,
+        grandTotal,
+        currency,
+        currencySymbol,
+        formattedGrandTotal: `${grandTotal.toFixed(2)} ${currencySymbol}`
+      }
+    };
   }
+
 
   async removeFromCart(dto: RemoveFromCartDto, userId: string) {
     await this.verifyUserExists(userId);
@@ -333,7 +405,21 @@ export class CartServiceService {
       const discount = (total * coupon.discountPercentage) / 100;
       const totalAfterDiscount = total - discount;
 
-      return { cartItems, total, discount, totalAfterDiscount, coupon };
+      const currency = cartItems[0]?.currency || 'USD';
+      const currencySymbol = cartItems[0]?.currencySymbol || '$';
+
+      return {
+        cartItems,
+        total,
+        discount,
+        totalAfterDiscount,
+        coupon,
+        currency,
+        currencySymbol,
+        formattedTotal: `${total.toFixed(2)} ${currencySymbol}`,
+        formattedDiscount: `${discount.toFixed(2)} ${currencySymbol}`,
+        formattedFinalTotal: `${totalAfterDiscount.toFixed(2)} ${currencySymbol}`
+      };
     } catch (error) {
       if (
         error instanceof BadRequestException ||
@@ -346,5 +432,6 @@ export class CartServiceService {
       throw new InternalServerErrorException('Failed to apply coupon');
     }
   }
+
 
 }

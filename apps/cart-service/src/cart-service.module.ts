@@ -62,6 +62,6 @@ import { CartServiceService } from "./cart-service.service";
     ]),
   ],
   controllers: [CartServiceController],
-  providers: [CartServiceService],
+  providers: [CartServiceService ],
 })
 export class CartServiceModule {}

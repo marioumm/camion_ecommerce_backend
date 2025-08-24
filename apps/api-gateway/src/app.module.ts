@@ -10,6 +10,7 @@ import { OrdersController } from "./controllers/order.controller";
 import { HealthController } from "./controllers/health.controller";
 import { WebhookController } from "./controllers/webhook.controller";
 import { ReviewsController } from "./controllers/reviews.controller";
+import { CurrencyController } from "./controllers/currency.controller";
 
 @Module({
   imports: [
@@ -106,6 +107,7 @@ import { ReviewsController } from "./controllers/reviews.controller";
     AffiliateController,
     WishlistController,
     WebhookController,
+    CurrencyController,
     ReviewsController,
     HealthController
   ],

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { Inject, Injectable } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { User, UserRole } from './entities/user.entity';
@@ -24,6 +24,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import * as bcrypt from 'bcrypt';
 import { LoginAdminDto } from './dto/login-admin.dto';
 import { UpdateAddressDto } from './dto/update-address.dto';
+import { CurrencyService } from './currency.service';
 
 @Injectable()
 export class UsersService {
@@ -34,6 +35,8 @@ export class UsersService {
     private otpService: OTPService,
     @Inject('NOTIFICATIONS_SERVICE')
     private readonly notificationsClient: ClientProxy,
+    private currencyService: CurrencyService,
+
   ) { }
 
   private async sendNotification(userId: string, title: string, body: string) {
@@ -215,51 +218,51 @@ export class UsersService {
     }
   }
 
- async verifyOTP(dto: VerifyDto) {
-  try {
-    if (!dto.email || !dto.phone) {
-      throw new RpcException({
-        statusCode: 400,
-        message: 'Email and phone are required',
+  async verifyOTP(dto: VerifyDto) {
+    try {
+      if (!dto.email || !dto.phone) {
+        throw new RpcException({
+          statusCode: 400,
+          message: 'Email and phone are required',
+        });
+      }
+
+      const user = await this.userRepository.findOne({
+        where: { email: dto.email, phone: dto.phone },
       });
+
+      if (!user)
+        throw new RpcException({
+          statusCode: 401,
+          message: 'Invalid credentials',
+        });
+      if (user.code !== dto.code)
+        throw new RpcException({
+          statusCode: 401,
+          message: 'Invalid OTP code',
+        });
+
+      user.code = '';
+
+      const isFirstLogin = user.isFirstLogin;
+
+      if (user.isFirstLogin) {
+        user.isFirstLogin = false;
+        await this.userRepository.save(user);
+      }
+
+      const payload = {
+        sub: user.id,
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
+      };
+      const token = this.jwtService.sign(payload);
+      return { accessToken: token, user, isFirstLogin };
+    } catch (error) {
+      throw toRpc(error, 'OTP verification failed');
     }
-
-    const user = await this.userRepository.findOne({
-      where: { email: dto.email, phone: dto.phone },
-    });
-
-    if (!user)
-      throw new RpcException({
-        statusCode: 401,
-        message: 'Invalid credentials',
-      });
-    if (user.code !== dto.code)
-      throw new RpcException({
-        statusCode: 401,
-        message: 'Invalid OTP code',
-      });
-
-    user.code = '';
-
-    const isFirstLogin = user.isFirstLogin;
-
-    if (user.isFirstLogin) {
-      user.isFirstLogin = false;
-      await this.userRepository.save(user);
-    }
-
-    const payload = {
-      sub: user.id,
-      email: user.email,
-      phone: user.phone,
-      role: user.role,
-    };
-    const token = this.jwtService.sign(payload);
-    return { accessToken: token, user, isFirstLogin };
-  } catch (error) {
-    throw toRpc(error, 'OTP verification failed');
   }
-}
 
 
   async createUser(dto: CreateUserDto): Promise<User> {
@@ -377,6 +380,7 @@ export class UsersService {
     return this.userRepository.save(user);
   }
 
+
   async deleteUser(id: string): Promise<void> {
     try {
       const result = await this.userRepository.delete(id);
@@ -425,22 +429,73 @@ export class UsersService {
   }
 
 
-async getUserAddress(userId: string): Promise<any> {
-  const user = await this.userRepository.findOne({ where: { id: userId } });
-  if (!user) {
-    throw new RpcException({ statusCode: 404, message: 'User not found' });
+  async getUserAddress(userId: string): Promise<any> {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (!user) {
+      throw new RpcException({ statusCode: 404, message: 'User not found' });
+    }
+    return user.address || null;
   }
-  return user.address || null;
-}
 
-async updateUserAddress(userId: string, addressDto: UpdateAddressDto): Promise<any> {
-  const user = await this.userRepository.findOne({ where: { id: userId } });
-  if (!user) {
-    throw new RpcException({ statusCode: 404, message: 'User not found' });
+  async updateUserAddress(userId: string, addressDto: UpdateAddressDto): Promise<any> {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (!user) {
+      throw new RpcException({ statusCode: 404, message: 'User not found' });
+    }
+    user.address = addressDto;
+    return this.userRepository.save(user);
   }
-  user.address = addressDto;
-  return this.userRepository.save(user);
-}
+
+  async updateUserCurrency(userId: string, currency: string): Promise<User> {
+    const normalizedCurrency = currency.toUpperCase();
+
+    const validCurrency = await this.currencyService.getCurrencyByCode(normalizedCurrency);
+
+    if (!validCurrency) {
+      throw new BadRequestException(
+        `Currency ${normalizedCurrency} is not supported or inactive`
+      );
+    }
+
+    const updateResult = await this.userRepository.update(
+      { id: userId },
+      { preferredCurrency: normalizedCurrency }
+    );
+
+    if (updateResult.affected === 0) {
+      throw new RpcException({
+        statusCode: 404,
+        message: 'User not found or currency update failed'
+      });
+    }
+
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+      select: ['id', 'email', 'phone', 'preferredCurrency', 'preferredLocale']
+    });
+
+    if (!user) {
+      throw new RpcException({ statusCode: 404, message: 'User not found' });
+    }
+
+    return user;
+  }
+
+  async getUserWithPreferences(userId: string): Promise<User> {
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+      select: ['id', 'email', 'phone', 'preferredCurrency', 'preferredLocale']
+    });
+
+    if (!user) {
+      throw new RpcException({
+        statusCode: 404,
+        message: 'User not found'
+      });
+    }
+
+    return user;
+  }
 
 }
 

@@ -67,11 +67,12 @@ var user_entity_1 = require("./entities/user.entity");
 var typeorm_2 = require("typeorm");
 var bcrypt = require("bcrypt");
 var UsersService = /** @class */ (function () {
-    function UsersService(userRepository, jwtService, otpService, notificationsClient) {
+    function UsersService(userRepository, jwtService, otpService, notificationsClient, currencyService) {
         this.userRepository = userRepository;
         this.jwtService = jwtService;
         this.otpService = otpService;
         this.notificationsClient = notificationsClient;
+        this.currencyService = currencyService;
     }
     UsersService.prototype.sendNotification = function (userId, title, body) {
         return __awaiter(this, void 0, void 0, function () {
@@ -623,6 +624,64 @@ var UsersService = /** @class */ (function () {
                         }
                         user.address = addressDto;
                         return [2 /*return*/, this.userRepository.save(user)];
+                }
+            });
+        });
+    };
+    UsersService.prototype.updateUserCurrency = function (userId, currency) {
+        return __awaiter(this, void 0, Promise, function () {
+            var normalizedCurrency, validCurrency, updateResult, user;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        normalizedCurrency = currency.toUpperCase();
+                        return [4 /*yield*/, this.currencyService.getCurrencyByCode(normalizedCurrency)];
+                    case 1:
+                        validCurrency = _a.sent();
+                        if (!validCurrency) {
+                            throw new common_1.BadRequestException("Currency " + normalizedCurrency + " is not supported or inactive");
+                        }
+                        return [4 /*yield*/, this.userRepository.update({ id: userId }, { preferredCurrency: normalizedCurrency })];
+                    case 2:
+                        updateResult = _a.sent();
+                        if (updateResult.affected === 0) {
+                            throw new microservices_1.RpcException({
+                                statusCode: 404,
+                                message: 'User not found or currency update failed'
+                            });
+                        }
+                        return [4 /*yield*/, this.userRepository.findOne({
+                                where: { id: userId },
+                                select: ['id', 'email', 'phone', 'preferredCurrency', 'preferredLocale']
+                            })];
+                    case 3:
+                        user = _a.sent();
+                        if (!user) {
+                            throw new microservices_1.RpcException({ statusCode: 404, message: 'User not found' });
+                        }
+                        return [2 /*return*/, user];
+                }
+            });
+        });
+    };
+    UsersService.prototype.getUserWithPreferences = function (userId) {
+        return __awaiter(this, void 0, Promise, function () {
+            var user;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, this.userRepository.findOne({
+                            where: { id: userId },
+                            select: ['id', 'email', 'phone', 'preferredCurrency', 'preferredLocale']
+                        })];
+                    case 1:
+                        user = _a.sent();
+                        if (!user) {
+                            throw new microservices_1.RpcException({
+                                statusCode: 404,
+                                message: 'User not found'
+                            });
+                        }
+                        return [2 /*return*/, user];
                 }
             });
         });

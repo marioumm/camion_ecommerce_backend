@@ -12,7 +12,7 @@ import { ClientProxy, RpcException } from '@nestjs/microservices';
 import axios from 'axios';
 import * as crypto from 'crypto';
 import { CartItem } from 'apps/cart-service/src/entities/cart.entity';
-import { catchError, firstValueFrom, timeout } from 'rxjs';
+import { catchError, firstValueFrom, timeout, of } from 'rxjs';
 
 
 @Injectable()
@@ -116,6 +116,7 @@ export class OrdersService {
         Uid: this.generateUUID(),
         KeyId: process.env.SKIPCASH_KEY_ID,
         Amount: amount.toFixed(2),
+        Currency: currency,
         FirstName: customerData.first_name,
         LastName: customerData.last_name,
         Phone: customerData.phone,
@@ -154,7 +155,7 @@ export class OrdersService {
 
   private generateSkipCashSignature(payload: any): string {
     const orderedFields = [
-      'Uid', 'KeyId', 'Amount', 'FirstName', 'LastName',
+      'Uid', 'KeyId', 'Amount','FirstName', 'LastName',
       'Phone', 'Email', 'Street', 'City', 'State',
       'Country', 'PostalCode', 'TransactionId', 'Custom1'
     ];
@@ -210,8 +211,23 @@ export class OrdersService {
         );
       }
 
-      const updatedDto = { ...dto, customer_data: customerData };
+      const userPreferences = await firstValueFrom(
+        this.usersClient.send('get_user_preferences', { userId }).pipe(
+          timeout(3000),
+          catchError(() => {
+            this.logger.warn(`User ${userId} preferences not found, using defaults`);
+            return of({
+              preferredCurrency: 'USD',
+              preferredLocale: 'en'
+            });
+          }),
+        ),
+      );
 
+      this.logger.log(`User preferences: ${JSON.stringify(userPreferences)}`);
+      this.logger.log(`Items currency: ${items[0]?.currency}`);
+
+      const updatedDto = { ...dto, customer_data: customerData };
       const res = await this.createWCOrder(updatedDto, items);
 
       const total = items.reduce(
@@ -219,11 +235,20 @@ export class OrdersService {
         0,
       );
 
+      const originalTotal = items.reduce(
+        (sum: number, item) => sum + (Number(item.originalPrice ?? 0) * Number(item.quantity ?? 1)),
+        0,
+      );
+
       const discountPercentage = items.length > 0 ? items[0].discountPercentage ?? 0 : 0;
       const discount = (total * discountPercentage) / 100;
       const totalAfterDiscount = total - discount;
 
-      const currency = res.data.currency || 'egp';
+      const currency = items[0]?.currency || userPreferences.preferredCurrency || 'USD';
+      const currencySymbol = items[0]?.currencySymbol || this.getCurrencySymbol(currency);
+
+      this.logger.log(`Final currency: ${currency} (${currencySymbol})`);
+      this.logger.log(`Payment amount: ${totalAfterDiscount} ${currency}`);
 
       const skipCashPayment = await this.createSkipCashPayment(
         res.data.order_id,
@@ -238,7 +263,9 @@ export class OrdersService {
         wcPaymentStatus: res.data.payment_status,
         wcOrderKey: res.data.order_key,
         currency,
+        currencySymbol,
         total: totalAfterDiscount.toString(),
+        originalTotal: originalTotal.toString(),
         userId,
         items,
         customerData,
@@ -249,10 +276,10 @@ export class OrdersService {
         skipCashTransactionId: skipCashPayment.resultObj.transactionId,
         skipCashPaymentUrl: skipCashPayment.resultObj.payUrl,
       });
+
       await this.orderRepository.save(order);
 
       const couponCode = items.length > 0 ? items[0].couponCode : undefined;
-
       if (couponCode) {
         try {
           await firstValueFrom(
@@ -269,13 +296,34 @@ export class OrdersService {
       await this.sendNotification(
         userId,
         'Order Created 🛒',
-        `Your order (${order.wcOrderId}) has been created successfully.`,
+        `Your order (${order.wcOrderId}) total: ${totalAfterDiscount.toFixed(2)} ${currencySymbol} has been created successfully.`,
       );
 
       return order;
     } catch (error) {
       throw toRpc(error, 'Failed to create order');
     }
+  }
+
+  private getCurrencySymbol(currency: string): string {
+    const symbols = {
+      USD: '$',
+      EUR: '€',
+      GBP: '£',
+      QAR: 'ر.ق',
+      SAR: 'ر.س',
+      AED: 'د.إ',
+      EGP: 'ج.م',
+      JPY: '¥',
+      CNY: '¥',
+      TRY: '₺',
+      INR: '₹',
+      KRW: '₩',
+      BRL: 'R$',
+      CAD: 'C$',
+      AUD: 'A$',
+    };
+    return symbols[currency] || currency;
   }
 
 

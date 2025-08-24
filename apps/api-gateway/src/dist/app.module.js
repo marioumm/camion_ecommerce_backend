@@ -19,6 +19,7 @@ var order_controller_1 = require("./controllers/order.controller");
 var health_controller_1 = require("./controllers/health.controller");
 var webhook_controller_1 = require("./controllers/webhook.controller");
 var reviews_controller_1 = require("./controllers/reviews.controller");
+var currency_controller_1 = require("./controllers/currency.controller");
 var AppModule = /** @class */ (function () {
     function AppModule() {
     }
@@ -117,6 +118,7 @@ var AppModule = /** @class */ (function () {
                 affiliate_controller_1.AffiliateController,
                 wishlist_controller_1.WishlistController,
                 webhook_controller_1.WebhookController,
+                currency_controller_1.CurrencyController,
                 reviews_controller_1.ReviewsController,
                 health_controller_1.HealthController
             ]

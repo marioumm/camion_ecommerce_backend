@@ -15,7 +15,6 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
 
-  // app.useGlobalGuards(new JwtAuthGuard(Reflector));
 
   app.enableCors({
     origin: '*',

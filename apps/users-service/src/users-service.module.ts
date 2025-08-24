@@ -8,6 +8,12 @@ import { JwtModule } from '@nestjs/jwt';
 import { OTPService } from './otp-service';
 import { AuthModule } from '@app/auth';
 import { ClientsModule, Transport } from '@nestjs/microservices';
+import { ScheduleModule } from '@nestjs/schedule';
+import { Currency } from './entities/currency.entity';
+import { CurrencyService } from './currency.service';
+import { CurrencySeeder } from './database/currency.seeder'; 
+import { HttpModule } from '@nestjs/axios';
+
 
 @Module({
   imports: [
@@ -22,12 +28,14 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
       autoLoadEntities: true,
       synchronize: true,
     }),
-    TypeOrmModule.forFeature([User]),
+    TypeOrmModule.forFeature([User , Currency]),
+    ScheduleModule.forRoot(),
     JwtModule.register({
       secret: process.env.JWT_SECRET,
       signOptions: { expiresIn: '7d' },
     }),
     AuthModule,
+    HttpModule,
     ClientsModule.registerAsync([
       {
         name: 'NOTIFICATIONS_SERVICE',
@@ -42,7 +50,7 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
       },
     ]),
   ],
-  controllers: [UsersServiceController],
-  providers: [UsersService, OTPService],
+  controllers: [UsersServiceController ],
+  providers: [UsersService, OTPService , CurrencyService , CurrencySeeder],
 })
 export class UsersServiceModule { }

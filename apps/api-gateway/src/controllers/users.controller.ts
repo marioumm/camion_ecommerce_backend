@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/require-await */
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 import {
   Body,
@@ -25,6 +26,8 @@ import { CurrentUserId } from 'libs/auth/src/current-user.decorator';
 import { Roles } from 'libs/auth/src/roles.decorator';
 import { RolesGuard } from 'libs/auth/src/roles.guard';
 import { firstValueFrom } from 'rxjs';
+
+
 
 @Controller('users')
 export class UserController {
@@ -136,4 +139,27 @@ export class UserController {
       ),
     );
   }
+
+  @UseGuards(JwtAuthGuard)
+  @Patch(':id/currency')
+  async updateUserCurrency(
+    @Param('id') id: string,
+    @Body() { currency }: { currency: string }
+  ) {
+    return this.usersClient.send(
+      { cmd: 'update_user_currency' },
+      { userId: id, currency: currency.toUpperCase() }
+    );
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get(':id/preferences')
+  async getUserPreferences(@Param('id') id: string) {
+    return this.usersClient.send(
+      { cmd: 'get_user_preferences' },
+      { userId: id }
+    );
+  }
+
+
 }
