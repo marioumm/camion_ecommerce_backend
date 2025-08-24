@@ -26,9 +26,9 @@ var Currency = /** @class */ (function () {
     __decorate([
         typeorm_1.Column({
             type: 'decimal',
-            precision: 10,
+            precision: 15,
             scale: 6,
-            "default": 1
+            "default": 1.000000
         })
     ], Currency.prototype, "rate");
     __decorate([

@@ -14,11 +14,11 @@ export class Currency {
   @Column({ length: 10 })
   symbol: string;
 
-  @Column({ 
-    type: 'decimal', 
-    precision: 10, 
-    scale: 6, 
-    default: 1 
+  @Column({
+    type: 'decimal',
+    precision: 15,
+    scale: 6,
+    default: 1.000000
   })
   rate: number;
 
