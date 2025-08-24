@@ -57,13 +57,15 @@ var User = /** @class */ (function () {
     __decorate([
         typeorm_1.Column({
             length: 3,
-            name: 'preferred_currency'
+            name: 'preferred_currency',
+            nullable: true
         })
     ], User.prototype, "preferredCurrency");
     __decorate([
         typeorm_1.Column({
             length: 5,
-            name: 'preferred_locale'
+            name: 'preferred_locale',
+            nullable: true
         })
     ], User.prototype, "preferredLocale");
     __decorate([

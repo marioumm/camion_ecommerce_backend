@@ -71,13 +71,15 @@ export class User {
   
   @Column({ 
     length: 3, 
-    name: 'preferred_currency'
+    name: 'preferred_currency',
+    nullable: true 
   })
   preferredCurrency: string;
 
   @Column({ 
     length: 5, 
-    name: 'preferred_locale'  
+    name: 'preferred_locale',
+    nullable: true 
   })
   preferredLocale: string;
 
