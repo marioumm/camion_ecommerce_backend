@@ -301,6 +301,24 @@ var UsersServiceController = /** @class */ (function () {
             });
         });
     };
+    UsersServiceController.prototype.updateUserAddress = function (data) {
+        return __awaiter(this, void 0, void 0, function () {
+            var userId, addressDto, error_12;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        _a.trys.push([0, 2, , 3]);
+                        userId = data.userId, addressDto = data.addressDto;
+                        return [4 /*yield*/, this.usersService.updateUserAddress(userId, addressDto)];
+                    case 1: return [2 /*return*/, _a.sent()];
+                    case 2:
+                        error_12 = _a.sent();
+                        throw mapException(error_12);
+                    case 3: return [2 /*return*/];
+                }
+            });
+        });
+    };
     UsersServiceController.prototype.getUserAddress = function (userId) {
         return __awaiter(this, void 0, void 0, function () {
             return __generator(this, function (_a) {
@@ -395,7 +413,7 @@ var UsersServiceController = /** @class */ (function () {
     };
     UsersServiceController.prototype.seedCurrencies = function () {
         return __awaiter(this, void 0, void 0, function () {
-            var error_12;
+            var error_13;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
@@ -405,8 +423,8 @@ var UsersServiceController = /** @class */ (function () {
                         _a.sent();
                         return [2 /*return*/, { success: true, message: 'Currency seeding completed successfully!' }];
                     case 2:
-                        error_12 = _a.sent();
-                        return [2 /*return*/, { success: false, message: error_12.message }];
+                        error_13 = _a.sent();
+                        return [2 /*return*/, { success: false, message: error_13.message }];
                     case 3: return [2 /*return*/];
                 }
             });
@@ -474,6 +492,10 @@ var UsersServiceController = /** @class */ (function () {
         microservices_1.MessagePattern({ cmd: 'delete_user' }),
         __param(0, microservices_1.Payload())
     ], UsersServiceController.prototype, "deleteUser");
+    __decorate([
+        microservices_1.MessagePattern({ cmd: 'updateUserAddress' }),
+        __param(0, microservices_1.Payload())
+    ], UsersServiceController.prototype, "updateUserAddress");
     __decorate([
         microservices_1.MessagePattern({ cmd: 'getUserAddress' }),
         __param(0, microservices_1.Payload())

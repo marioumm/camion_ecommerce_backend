@@ -55,10 +55,10 @@ function mapException(error: any) {
 )
 @Controller()
 export class UsersServiceController {
-  constructor(private readonly usersService: UsersService ,  
+  constructor(private readonly usersService: UsersService,
     private readonly currencyService: CurrencyService,
     private readonly currencySeeder: CurrencySeeder
-) { }
+  ) { }
 
   @MessagePattern({ cmd: 'register_user' })
   async register(@Payload() dto: RegisterDto) {
@@ -189,6 +189,15 @@ export class UsersServiceController {
     }
   }
 
+  @MessagePattern({ cmd: 'updateUserAddress' })
+  async updateUserAddress(@Payload() data: { userId: string; addressDto: any }) {
+    try {
+      const { userId, addressDto } = data;
+      return await this.usersService.updateUserAddress(userId, addressDto);
+    } catch (error) {
+      throw mapException(error);
+    }
+  }
 
 
   @MessagePattern({ cmd: 'getUserAddress' })
@@ -196,8 +205,8 @@ export class UsersServiceController {
     return this.usersService.getUserAddress(userId);
   }
 
-  
-  @MessagePattern({cmd:'update_user_currency'})
+
+  @MessagePattern({ cmd: 'update_user_currency' })
   async updateUserCurrency(data: { userId: string; currency: string }) {
     return await this.usersService.updateUserCurrency(data.userId, data.currency);
   }
@@ -214,10 +223,10 @@ export class UsersServiceController {
   }
 
   @MessagePattern('convert_products_currency')
-  async convertProductsCurrency(data: { 
-    userId: string; 
-    products: any[]; 
-    fromCurrency?: string; 
+  async convertProductsCurrency(data: {
+    userId: string;
+    products: any[];
+    fromCurrency?: string;
   }) {
     const { userId, products } = data;
 
@@ -260,7 +269,7 @@ export class UsersServiceController {
     return await this.currencyService.updateExchangeRates();
   }
 
-   @MessagePattern('seed_currencies')
+  @MessagePattern('seed_currencies')
   async seedCurrencies() {
     try {
       await this.currencySeeder.seed();
