@@ -174,6 +174,7 @@ var OrdersService = /** @class */ (function () {
             });
         });
     };
+    // add 
     OrdersService.prototype.createSkipCashPayment = function (orderId, amount, currency, customerData) {
         var _a;
         return __awaiter(this, void 0, void 0, function () {
