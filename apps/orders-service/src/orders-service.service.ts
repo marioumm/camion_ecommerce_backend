@@ -224,8 +224,12 @@ export class OrdersService {
       const discount = (total * discountPercentage) / 100;
       const totalAfterDiscount = total - discount;
 
-      const totalAfterDiscountAndShipping = totalAfterDiscount + customerData.shipping_option.cost;
+      const totalAfterDiscountNum = Number(totalAfterDiscount) || 0;
+      const shippingCostNum = Number(customerData.shipping_option.cost) || 0;
 
+      const totalAfterDiscountAndShipping = (
+      totalAfterDiscountNum + shippingCostNum
+      ).toFixed(2); 
       const currency = res.data.currency || 'egp';
 
       const skipCashPayment = await this.createSkipCashPayment(
@@ -242,7 +246,7 @@ export class OrdersService {
         wcOrderKey: res.data.order_key,
         currency,
         total: totalAfterDiscountAndShipping.toString(),
-        shippingCost:customerData.shipping_option.cost || 0,
+        shippingCost:customerData.shipping_option.cost.toString() || 0,
         userId,
         items,
         customerData,
