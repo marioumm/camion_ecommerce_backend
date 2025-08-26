@@ -219,10 +219,12 @@ export class OrdersService {
         (sum: number, item) => sum + (Number(item.price ?? 0) * Number(item.quantity ?? 1)),
         0,
       );
-
+      
       const discountPercentage = items.length > 0 ? items[0].discountPercentage ?? 0 : 0;
       const discount = (total * discountPercentage) / 100;
       const totalAfterDiscount = total - discount;
+
+      const totalAfterDiscountAndShipping = totalAfterDiscount + customerData.shipping_option.cost;
 
       const currency = res.data.currency || 'egp';
 
@@ -239,7 +241,8 @@ export class OrdersService {
         wcPaymentStatus: res.data.payment_status,
         wcOrderKey: res.data.order_key,
         currency,
-        total: totalAfterDiscount.toString(),
+        total: totalAfterDiscountAndShipping.toString(),
+        shippingCost:customerData.shipping_option.cost || 0,
         userId,
         items,
         customerData,
