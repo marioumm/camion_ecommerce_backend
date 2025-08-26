@@ -78,9 +78,10 @@ export class OrdersService {
             value: v.value,
           })) || [],
       }));
-
+      if(!wcItems)
+        throw new RpcException('Cart is empty, Please add items to cart');
       const order_data = {
-        line_items: wcItems,
+        items: wcItems,
         customer_data: dto.customer_data,
         payment_method: "cod",
         payment_data: dto.payment_data,
