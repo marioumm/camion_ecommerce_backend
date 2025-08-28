@@ -13,5 +13,4 @@ export class UpdateUserDto {
   @IsOptional()
   @IsString()
   fullName?: string;
-
 }

@@ -234,7 +234,7 @@ export class OrdersService {
 
       const skipCashPayment = await this.createSkipCashPayment(
         res.data.order_id,
-        totalAfterDiscount,
+        Number(totalAfterDiscountAndShipping),
         currency,
         customerData,
       );
