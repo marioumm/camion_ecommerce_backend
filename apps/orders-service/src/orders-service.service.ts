@@ -245,7 +245,7 @@ export class OrdersService {
         wcPaymentStatus: res.data.payment_status,
         wcOrderKey: res.data.order_key,
         currency,
-        total: totalAfterDiscountAndShipping.toString(),
+        total: totalAfterDiscount.toString(),
         shippingCost:customerData.shipping_option.cost.toString() || 0,
         userId,
         items,
