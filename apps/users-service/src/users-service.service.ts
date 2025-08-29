@@ -481,7 +481,7 @@ export class UsersService {
   }
   // assign only needed fields
   user.address.shipping_option = {
-    id: option.instance_id,
+    method_id: option.instance_id,
     title: option.title,
     cost: option.cost,
   };

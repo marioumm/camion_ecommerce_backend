@@ -613,7 +613,7 @@ var UsersService = /** @class */ (function () {
     };
     UsersService.prototype.updateUserAddress = function (userId, addressDto) {
         return __awaiter(this, void 0, Promise, function () {
-            var user;
+            var user, requestBody, response, shippingOptions, option;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0: return [4 /*yield*/, this.userRepository.findOne({ where: { id: userId } })];
@@ -622,7 +622,46 @@ var UsersService = /** @class */ (function () {
                         if (!user) {
                             throw new microservices_1.RpcException({ statusCode: 404, message: 'User not found' });
                         }
+                        // update user address
                         user.address = addressDto;
+                        requestBody = {
+                            items: [],
+                            shippingAddress: {
+                                first_name: addressDto.first_name,
+                                last_name: addressDto.last_name,
+                                address_1: addressDto.address_1,
+                                address_2: addressDto.address_2,
+                                city: addressDto.city,
+                                state: addressDto.state,
+                                postcode: addressDto.postcode,
+                                country: addressDto.country
+                            }
+                        };
+                        return [4 /*yield*/, fetch("https://buckydrop.camion-app.com/api/shipping/calculate", {
+                                method: "POST",
+                                headers: {
+                                    "Content-Type": "application/json"
+                                },
+                                body: JSON.stringify(requestBody)
+                            })];
+                    case 2:
+                        response = _a.sent();
+                        if (!response.ok) {
+                            throw new microservices_1.RpcException({ statusCode: response.status, message: "Failed to fetch shipping option" });
+                        }
+                        return [4 /*yield*/, response.json()];
+                    case 3:
+                        shippingOptions = _a.sent();
+                        option = shippingOptions[0];
+                        if (!option) {
+                            throw new microservices_1.RpcException({ statusCode: 404, message: "No shipping options available" });
+                        }
+                        // assign only needed fields
+                        user.address.shipping_option = {
+                            method_id: option.instance_id,
+                            title: option.title,
+                            cost: option.cost
+                        };
                         return [2 /*return*/, this.userRepository.save(user)];
                 }
             });
