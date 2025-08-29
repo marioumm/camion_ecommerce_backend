@@ -60,7 +60,7 @@ export class User {
     shipping_address?: any;
     shipping_option?: {
       method_id: string;
-      method_title: string;
+      title: string;
       cost: string;
     };
   };

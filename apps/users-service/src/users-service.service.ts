@@ -438,13 +438,58 @@ export class UsersService {
   }
 
   async updateUserAddress(userId: string, addressDto: UpdateAddressDto): Promise<any> {
-    const user = await this.userRepository.findOne({ where: { id: userId } });
-    if (!user) {
-      throw new RpcException({ statusCode: 404, message: 'User not found' });
-    }
-    user.address = addressDto;
-    return this.userRepository.save(user);
+  const user = await this.userRepository.findOne({ where: { id: userId } });
+  if (!user) {
+    throw new RpcException({ statusCode: 404, message: 'User not found' });
   }
+
+  // update user address
+  user.address = addressDto;
+  // build request body as API expects
+  const requestBody = {
+    items: [],
+    shippingAddress: {
+      first_name: addressDto.first_name,
+      last_name: addressDto.last_name,
+      address_1: addressDto.address_1,
+      address_2: addressDto.address_2,
+      city: addressDto.city,
+      state: addressDto.state,
+      postcode: addressDto.postcode,
+      country: addressDto.country,
+    },
+  };
+
+  // fetch shipping options from API
+  const response = await fetch("https://buckydrop.camion-app.com/api/shipping/calculate", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(requestBody),
+  });
+
+  if (!response.ok) {
+    throw new RpcException({ statusCode: response.status, message: "Failed to fetch shipping option" });
+  }
+
+  const shippingOptions = await response.json();
+
+  const option = shippingOptions[0];
+  if (!option) {
+    throw new RpcException({ statusCode: 404, message: "No shipping options available" });
+  }
+  // assign only needed fields
+  user.address.shipping_option = {
+    id: option.instance_id,
+    title: option.title,
+    cost: option.cost,
+  };
+
+  return this.userRepository.save(user);
+  }
+
+
 
   async updateUserCurrency(userId: string, currency: string): Promise<User> {
     const normalizedCurrency = currency.toUpperCase();
