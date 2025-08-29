@@ -6,7 +6,7 @@ class ShippingOptionDto {
   method_id: string;
 
   @IsString()
-  method_title: string;
+  title: string;
 
   @IsString()
   cost: string;
