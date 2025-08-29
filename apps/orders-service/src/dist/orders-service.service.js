@@ -177,16 +177,14 @@ var OrdersService = /** @class */ (function () {
         });
     };
     OrdersService.prototype.createSkipCashPayment = function (orderId, amount, currency, customerData) {
-        var _a;
+        var _a, _b, _c, _d, _e, _f, _g;
         return __awaiter(this, void 0, void 0, function () {
-            var url, payload, signature, res, error_3;
-            return __generator(this, function (_b) {
-                switch (_b.label) {
+            var url, payload, signature, res, error_3, customMessage;
+            return __generator(this, function (_h) {
+                switch (_h.label) {
                     case 0:
-                        _b.trys.push([0, 2, , 3]);
+                        _h.trys.push([0, 2, , 3]);
                         url = this.SKIPCASH_BASE_URL + "/api/v1/payments";
-                        console.log('SKIPCASH_CLIENT_ID:', process.env.SKIPCASH_CLIENT_ID);
-                        console.log('SKIPCASH_BASE_URL:', this.SKIPCASH_BASE_URL);
                         payload = {
                             Uid: this.generateUUID(),
                             KeyId: process.env.SKIPCASH_KEY_ID,
@@ -205,8 +203,6 @@ var OrdersService = /** @class */ (function () {
                             Custom1: ""
                         };
                         signature = this.generateSkipCashSignature(payload);
-                        console.log('SkipCash Payload:', JSON.stringify(payload, null, 2));
-                        console.log('Generated Signature:', signature);
                         return [4 /*yield*/, axios_1["default"].post(url, payload, {
                                 headers: {
                                     'Authorization': signature,
@@ -214,16 +210,30 @@ var OrdersService = /** @class */ (function () {
                                 }
                             })];
                     case 1:
-                        res = _b.sent();
-                        console.log('SkipCash response data:', res.data);
+                        res = _h.sent();
                         return [2 /*return*/, res.data];
                     case 2:
-                        error_3 = _b.sent();
+                        error_3 = _h.sent();
                         this.logger.error("SkipCash payment failed: " + error_3.message);
-                        if ((_a = error_3.response) === null || _a === void 0 ? void 0 : _a.data) {
-                            this.logger.error('SkipCash error details:', error_3.response.data);
+                        customMessage = 'Please check your information and try again';
+                        if (((_a = error_3.response) === null || _a === void 0 ? void 0 : _a.status) === 400) {
+                            if ((_d = (_c = (_b = error_3.response) === null || _b === void 0 ? void 0 : _b.data) === null || _c === void 0 ? void 0 : _c.errorMessage) === null || _d === void 0 ? void 0 : _d.includes('Signature')) {
+                                customMessage = 'Payment verification failed. Please review your details and try again';
+                            }
+                            else {
+                                customMessage = 'Invalid payment details. Please check your information and try again';
+                            }
                         }
-                        throw new common_1.NotFoundException("SkipCash payment error: " + error_3.message);
+                        else if (((_e = error_3.response) === null || _e === void 0 ? void 0 : _e.status) === 401) {
+                            customMessage = 'Payment authentication failed. Please try again';
+                        }
+                        else if (((_f = error_3.response) === null || _f === void 0 ? void 0 : _f.status) === 422) {
+                            customMessage = 'Payment information is incomplete. Please fill all required fields';
+                        }
+                        else if (((_g = error_3.response) === null || _g === void 0 ? void 0 : _g.status) === 500) {
+                            customMessage = 'Payment service temporarily unavailable. Please try again in a few minutes';
+                        }
+                        throw new common_1.NotFoundException(customMessage);
                     case 3: return [2 /*return*/];
                 }
             });
@@ -295,19 +305,19 @@ var OrdersService = /** @class */ (function () {
                         return [4 /*yield*/, this.createWCOrder(updatedDto, items)];
                     case 6:
                         res = _e.sent();
-                        total = items.reduce(function (sum, item) { var _a, _b; return sum + (Number((_a = item.price) !== null && _a !== void 0 ? _a : 0) * Number((_b = item.quantity) !== null && _b !== void 0 ? _b : 1)); }, 0);
-                        originalTotal = items.reduce(function (sum, item) { var _a, _b; return sum + (Number((_a = item.originalPrice) !== null && _a !== void 0 ? _a : 0) * Number((_b = item.quantity) !== null && _b !== void 0 ? _b : 1)); }, 0);
+                        total = parseFloat(items.reduce(function (sum, item) { var _a, _b; return sum + (Number((_a = item.price) !== null && _a !== void 0 ? _a : 0) * Number((_b = item.quantity) !== null && _b !== void 0 ? _b : 1)); }, 0).toFixed(2));
+                        originalTotal = parseFloat(items.reduce(function (sum, item) { var _a, _b; return sum + (Number((_a = item.originalPrice) !== null && _a !== void 0 ? _a : 0) * Number((_b = item.quantity) !== null && _b !== void 0 ? _b : 1)); }, 0).toFixed(2));
                         discountPercentage = items.length > 0 ? (_b = items[0].discountPercentage) !== null && _b !== void 0 ? _b : 0 : 0;
-                        discount = (total * discountPercentage) / 100;
-                        totalAfterDiscount = total - discount;
-                        totalAfterDiscountNum = Number(totalAfterDiscount) || 0;
-                        shippingCostNum = Number(customerData.shipping_option.cost) || 0;
-                        totalAfterDiscountAndShipping = (totalAfterDiscountNum + shippingCostNum).toFixed(2);
+                        discount = parseFloat(((total * discountPercentage) / 100).toFixed(2));
+                        totalAfterDiscount = parseFloat((total - discount).toFixed(2));
+                        totalAfterDiscountNum = totalAfterDiscount;
+                        shippingCostNum = parseFloat(Number(customerData.shipping_option.cost).toFixed(2));
+                        totalAfterDiscountAndShipping = parseFloat((totalAfterDiscountNum + shippingCostNum).toFixed(2));
                         currency = ((_c = items[0]) === null || _c === void 0 ? void 0 : _c.currency) || userPreferences.preferredCurrency || 'USD';
                         currencySymbol = ((_d = items[0]) === null || _d === void 0 ? void 0 : _d.currencySymbol) || this.getCurrencySymbol(currency);
                         this.logger.log("Final currency: " + currency + " (" + currencySymbol + ")");
                         this.logger.log("Payment amount: " + totalAfterDiscount + " " + currency);
-                        return [4 /*yield*/, this.createSkipCashPayment(res.data.order_id, Number(totalAfterDiscountAndShipping), currency, customerData)];
+                        return [4 /*yield*/, this.createSkipCashPayment(res.data.order_id, totalAfterDiscountAndShipping, currency, customerData)];
                     case 7:
                         skipCashPayment = _e.sent();
                         order = this.orderRepository.create({
@@ -317,9 +327,9 @@ var OrdersService = /** @class */ (function () {
                             wcOrderKey: res.data.order_key,
                             currency: currency,
                             currencySymbol: currencySymbol,
-                            total: totalAfterDiscount.toString(),
-                            shippingCost: customerData.shipping_option.cost.toString() || 0,
-                            originalTotal: originalTotal.toString(),
+                            total: totalAfterDiscount.toFixed(2),
+                            shippingCost: shippingCostNum.toFixed(2),
+                            originalTotal: originalTotal.toFixed(2),
                             userId: userId,
                             items: items,
                             customerData: customerData,

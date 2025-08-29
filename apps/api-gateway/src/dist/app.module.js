@@ -18,7 +18,6 @@ var auth_1 = require("@app/auth");
 var order_controller_1 = require("./controllers/order.controller");
 var health_controller_1 = require("./controllers/health.controller");
 var webhook_controller_1 = require("./controllers/webhook.controller");
-var reviews_controller_1 = require("./controllers/reviews.controller");
 var currency_controller_1 = require("./controllers/currency.controller");
 var AppModule = /** @class */ (function () {
     function AppModule() {
@@ -97,17 +96,6 @@ var AppModule = /** @class */ (function () {
                         }); },
                         inject: [config_1.ConfigService]
                     },
-                    {
-                        name: 'REVIEWS_SERVICE',
-                        useFactory: function (config) { return ({
-                            transport: microservices_1.Transport.TCP,
-                            options: {
-                                host: config.get('REVIEWS_SERVICE_HOST'),
-                                port: Number(config.get('REVIEWS_TCP_PORT'))
-                            }
-                        }); },
-                        inject: [config_1.ConfigService]
-                    },
                 ]),
                 auth_1.AuthModule
             ],
@@ -119,7 +107,6 @@ var AppModule = /** @class */ (function () {
                 wishlist_controller_1.WishlistController,
                 webhook_controller_1.WebhookController,
                 currency_controller_1.CurrencyController,
-                reviews_controller_1.ReviewsController,
                 health_controller_1.HealthController
             ]
         })

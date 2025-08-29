@@ -111,8 +111,7 @@ export class OrdersService {
   async createSkipCashPayment(orderId: string, amount: number, currency: string, customerData: any) {
     try {
       const url = `${this.SKIPCASH_BASE_URL}/api/v1/payments`;
-      console.log('SKIPCASH_CLIENT_ID:', process.env.SKIPCASH_CLIENT_ID);
-      console.log('SKIPCASH_BASE_URL:', this.SKIPCASH_BASE_URL);
+
       const payload = {
         Uid: this.generateUUID(),
         KeyId: process.env.SKIPCASH_KEY_ID,
@@ -128,29 +127,38 @@ export class OrdersService {
         Country: customerData.country,
         PostalCode: customerData.postcode,
         TransactionId: String(orderId),
-        Custom1: ""
+        Custom1: "",
       };
 
       const signature = this.generateSkipCashSignature(payload);
-
-
-      console.log('SkipCash Payload:', JSON.stringify(payload, null, 2));
-      console.log('Generated Signature:', signature);
-
       const res = await axios.post(url, payload, {
         headers: {
           'Authorization': signature,
           'Content-Type': 'application/json'
         }
       });
-      console.log('SkipCash response data:', res.data);
+
       return res.data;
     } catch (error) {
       this.logger.error(`SkipCash payment failed: ${error.message}`);
-      if (error.response?.data) {
-        this.logger.error('SkipCash error details:', error.response.data);
+
+      let customMessage = 'Please check your information and try again';
+
+      if (error.response?.status === 400) {
+        if (error.response?.data?.errorMessage?.includes('Signature')) {
+          customMessage = 'Payment verification failed. Please review your details and try again';
+        } else {
+          customMessage = 'Invalid payment details. Please check your information and try again';
+        }
+      } else if (error.response?.status === 401) {
+        customMessage = 'Payment authentication failed. Please try again';
+      } else if (error.response?.status === 422) {
+        customMessage = 'Payment information is incomplete. Please fill all required fields';
+      } else if (error.response?.status === 500) {
+        customMessage = 'Payment service temporarily unavailable. Please try again in a few minutes';
       }
-      throw new NotFoundException(`SkipCash payment error: ${error.message}`);
+
+      throw new NotFoundException(customMessage);
     }
   }
 
@@ -231,26 +239,30 @@ export class OrdersService {
       const updatedDto = { ...dto, customer_data: customerData };
       const res = await this.createWCOrder(updatedDto, items);
 
-      const total = items.reduce(
-        (sum: number, item) => sum + (Number(item.price ?? 0) * Number(item.quantity ?? 1)),
-        0,
+      const total = parseFloat(
+        items.reduce(
+          (sum: number, item) => sum + (Number(item.price ?? 0) * Number(item.quantity ?? 1)),
+          0,
+        ).toFixed(2)
       );
 
-      const originalTotal = items.reduce(
-        (sum: number, item) => sum + (Number(item.originalPrice ?? 0) * Number(item.quantity ?? 1)),
-        0,
+      const originalTotal = parseFloat(
+        items.reduce(
+          (sum: number, item) => sum + (Number(item.originalPrice ?? 0) * Number(item.quantity ?? 1)),
+          0,
+        ).toFixed(2)
       );
 
       const discountPercentage = items.length > 0 ? items[0].discountPercentage ?? 0 : 0;
-      const discount = (total * discountPercentage) / 100;
-      const totalAfterDiscount = total - discount;
+      const discount = parseFloat(((total * discountPercentage) / 100).toFixed(2));
+      const totalAfterDiscount = parseFloat((total - discount).toFixed(2));
 
-      const totalAfterDiscountNum = Number(totalAfterDiscount) || 0;
-      const shippingCostNum = Number(customerData.shipping_option.cost) || 0;
+      const totalAfterDiscountNum = totalAfterDiscount;
+      const shippingCostNum = parseFloat(Number(customerData.shipping_option.cost).toFixed(2));
 
-       const totalAfterDiscountAndShipping = (
-      totalAfterDiscountNum + shippingCostNum
-      ).toFixed(2); 
+      const totalAfterDiscountAndShipping = parseFloat(
+        (totalAfterDiscountNum + shippingCostNum).toFixed(2)
+      );
 
       const currency = items[0]?.currency || userPreferences.preferredCurrency || 'USD';
       const currencySymbol = items[0]?.currencySymbol || this.getCurrencySymbol(currency);
@@ -260,7 +272,7 @@ export class OrdersService {
 
       const skipCashPayment = await this.createSkipCashPayment(
         res.data.order_id,
-        Number(totalAfterDiscountAndShipping),
+        totalAfterDiscountAndShipping,
         currency,
         customerData,
       );
@@ -272,9 +284,9 @@ export class OrdersService {
         wcOrderKey: res.data.order_key,
         currency,
         currencySymbol,
-        total: totalAfterDiscount.toString(),
-        shippingCost:customerData.shipping_option.cost.toString() || 0,
-        originalTotal: originalTotal.toString(),
+        total: totalAfterDiscount.toFixed(2),
+        shippingCost: shippingCostNum.toFixed(2),
+        originalTotal: originalTotal.toFixed(2),
         userId,
         items,
         customerData,
@@ -287,6 +299,7 @@ export class OrdersService {
       });
 
       await this.orderRepository.save(order);
+
 
       const couponCode = items.length > 0 ? items[0].couponCode : undefined;
       if (couponCode) {
