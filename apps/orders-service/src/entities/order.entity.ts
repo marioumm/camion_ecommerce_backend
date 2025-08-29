@@ -23,6 +23,9 @@ export class Order {
   @Column({ nullable: true })
   total: string;
 
+  @Column({ default: 0 })
+  shippingCost: string;
+
   @Column({ nullable: true })
   currencySymbol?: string;
 

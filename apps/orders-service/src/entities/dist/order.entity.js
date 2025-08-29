@@ -33,6 +33,9 @@ var Order = /** @class */ (function () {
         typeorm_1.Column({ nullable: true })
     ], Order.prototype, "total");
     __decorate([
+        typeorm_1.Column({ "default": 0 })
+    ], Order.prototype, "shippingCost");
+    __decorate([
         typeorm_1.Column({ nullable: true })
     ], Order.prototype, "currencySymbol");
     __decorate([

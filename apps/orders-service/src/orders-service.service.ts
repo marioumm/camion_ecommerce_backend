@@ -78,9 +78,10 @@ export class OrdersService {
             value: v.value,
           })) || [],
       }));
-
+      if (!wcItems)
+        throw new RpcException('Cart is empty, Please add items to cart');
       const order_data = {
-        line_items: wcItems,
+        items: wcItems,
         customer_data: dto.customer_data,
         payment_method: "cod",
         payment_data: dto.payment_data,
@@ -155,7 +156,7 @@ export class OrdersService {
 
   private generateSkipCashSignature(payload: any): string {
     const orderedFields = [
-      'Uid', 'KeyId', 'Amount','FirstName', 'LastName',
+      'Uid', 'KeyId', 'Amount', 'FirstName', 'LastName',
       'Phone', 'Email', 'Street', 'City', 'State',
       'Country', 'PostalCode', 'TransactionId', 'Custom1'
     ];
@@ -244,6 +245,13 @@ export class OrdersService {
       const discount = (total * discountPercentage) / 100;
       const totalAfterDiscount = total - discount;
 
+      const totalAfterDiscountNum = Number(totalAfterDiscount) || 0;
+      const shippingCostNum = Number(customerData.shipping_option.cost) || 0;
+
+       const totalAfterDiscountAndShipping = (
+      totalAfterDiscountNum + shippingCostNum
+      ).toFixed(2); 
+
       const currency = items[0]?.currency || userPreferences.preferredCurrency || 'USD';
       const currencySymbol = items[0]?.currencySymbol || this.getCurrencySymbol(currency);
 
@@ -252,7 +260,7 @@ export class OrdersService {
 
       const skipCashPayment = await this.createSkipCashPayment(
         res.data.order_id,
-        totalAfterDiscount,
+        Number(totalAfterDiscountAndShipping),
         currency,
         customerData,
       );
@@ -265,6 +273,7 @@ export class OrdersService {
         currency,
         currencySymbol,
         total: totalAfterDiscount.toString(),
+        shippingCost:customerData.shipping_option.cost.toString() || 0,
         originalTotal: originalTotal.toString(),
         userId,
         items,
@@ -429,7 +438,6 @@ export class OrdersService {
       throw toRpc(error, 'Failed to cancel order');
     }
   }
-
 
   async markAsDelivered(id: string) {
     try {

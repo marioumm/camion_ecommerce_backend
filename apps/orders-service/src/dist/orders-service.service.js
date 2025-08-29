@@ -136,8 +136,10 @@ var OrdersService = /** @class */ (function () {
                                 }); })) || []
                             });
                         });
+                        if (!wcItems)
+                            throw new microservices_1.RpcException('Cart is empty, Please add items to cart');
                         order_data = {
-                            line_items: wcItems,
+                            items: wcItems,
                             customer_data: dto.customer_data,
                             payment_method: "cod",
                             payment_data: dto.payment_data
@@ -254,7 +256,7 @@ var OrdersService = /** @class */ (function () {
     OrdersService.prototype.createOrder = function (userId, items, dto) {
         var _a, _b, _c, _d;
         return __awaiter(this, void 0, Promise, function () {
-            var customerData, userPreferences, updatedDto, res, total, originalTotal, discountPercentage, discount, totalAfterDiscount, currency, currencySymbol, skipCashPayment, order, couponCode, err_2, error_4;
+            var customerData, userPreferences, updatedDto, res, total, originalTotal, discountPercentage, discount, totalAfterDiscount, totalAfterDiscountNum, shippingCostNum, totalAfterDiscountAndShipping, currency, currencySymbol, skipCashPayment, order, couponCode, err_2, error_4;
             var _this = this;
             return __generator(this, function (_e) {
                 switch (_e.label) {
@@ -298,11 +300,14 @@ var OrdersService = /** @class */ (function () {
                         discountPercentage = items.length > 0 ? (_b = items[0].discountPercentage) !== null && _b !== void 0 ? _b : 0 : 0;
                         discount = (total * discountPercentage) / 100;
                         totalAfterDiscount = total - discount;
+                        totalAfterDiscountNum = Number(totalAfterDiscount) || 0;
+                        shippingCostNum = Number(customerData.shipping_option.cost) || 0;
+                        totalAfterDiscountAndShipping = (totalAfterDiscountNum + shippingCostNum).toFixed(2);
                         currency = ((_c = items[0]) === null || _c === void 0 ? void 0 : _c.currency) || userPreferences.preferredCurrency || 'USD';
                         currencySymbol = ((_d = items[0]) === null || _d === void 0 ? void 0 : _d.currencySymbol) || this.getCurrencySymbol(currency);
                         this.logger.log("Final currency: " + currency + " (" + currencySymbol + ")");
                         this.logger.log("Payment amount: " + totalAfterDiscount + " " + currency);
-                        return [4 /*yield*/, this.createSkipCashPayment(res.data.order_id, totalAfterDiscount, currency, customerData)];
+                        return [4 /*yield*/, this.createSkipCashPayment(res.data.order_id, Number(totalAfterDiscountAndShipping), currency, customerData)];
                     case 7:
                         skipCashPayment = _e.sent();
                         order = this.orderRepository.create({
@@ -313,6 +318,7 @@ var OrdersService = /** @class */ (function () {
                             currency: currency,
                             currencySymbol: currencySymbol,
                             total: totalAfterDiscount.toString(),
+                            shippingCost: customerData.shipping_option.cost.toString() || 0,
                             originalTotal: originalTotal.toString(),
                             userId: userId,
                             items: items,
