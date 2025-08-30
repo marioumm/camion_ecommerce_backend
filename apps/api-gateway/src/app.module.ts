@@ -10,6 +10,7 @@ import { OrdersController } from "./controllers/order.controller";
 import { HealthController } from "./controllers/health.controller";
 import { WebhookController } from "./controllers/webhook.controller";
 import { CurrencyController } from "./controllers/currency.controller";
+import { SettingsController } from "./controllers/settings.controller";
 
 @Module({
   imports: [
@@ -85,6 +86,17 @@ import { CurrencyController } from "./controllers/currency.controller";
         }),
         inject: [ConfigService],
       },
+      {
+        name: 'SETTINGS_SERVICE',
+        useFactory: (config: ConfigService) => ({
+          transport: Transport.TCP,
+          options: {
+            host: config.get('SETTINGS_SERVICE_HOST'),
+            port: Number(config.get('SETTINGS_TCP_PORT')),
+          },
+        }),
+        inject: [ConfigService],
+      },
     ]),
     AuthModule
   ],
@@ -96,6 +108,7 @@ import { CurrencyController } from "./controllers/currency.controller";
     WishlistController,
     WebhookController,
     CurrencyController,
+    SettingsController,
     HealthController
   ],
 })

@@ -67,9 +67,37 @@ export class OrdersController {
 
   @Get()
   @UseGuards(JwtAuthGuard)
-  @Roles(UserRole.ADMIN) 
+  @Roles(UserRole.ADMIN)
   getAllOrders() {
     return this.orderClient.send({ cmd: 'get_all_orders' }, {});
+  }
+
+  @Get('/count/all')
+  @UseGuards(JwtAuthGuard)
+  @Roles(UserRole.ADMIN)
+  countAllOrders() {
+    return this.orderClient.send({ cmd: 'count_all_orders' }, {});
+  }
+
+  @Get('/count/completed')
+  @UseGuards(JwtAuthGuard)
+  @Roles(UserRole.ADMIN)
+  countCompletedOrders() {
+    return this.orderClient.send({ cmd: 'count_completed_orders' }, {});
+  }
+
+  @Get('/count/pending')
+  @UseGuards(JwtAuthGuard)
+  @Roles(UserRole.ADMIN)
+  countPendingOrders() {
+    return this.orderClient.send({ cmd: 'count_pending_orders' }, {});
+  }
+
+  @Get('/count/cancelled')
+  @UseGuards(JwtAuthGuard)
+  @Roles(UserRole.ADMIN)
+  countCancelledOrders() {
+    return this.orderClient.send({ cmd: 'count_cancelled_orders' }, {});
   }
 
 }

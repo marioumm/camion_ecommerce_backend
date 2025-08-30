@@ -120,4 +120,39 @@ export class AffiliateController {
     return this.affiliateClient.send({ cmd: 'affiliate.getWalletTransactions' }, { userId });
   }
 
+  @Get('/count/all')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  countAllAffiliates() {
+    return this.affiliateClient.send({ cmd: 'count_all_affiliates' }, {});
+  }
+
+  @Get('/count/approved')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  countApprovedAffiliates() {
+    return this.affiliateClient.send({ cmd: 'count_approved_affiliates' }, {});
+  }
+
+  @Get('/count/pending')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  countPendingAffiliates() {
+    return this.affiliateClient.send({ cmd: 'count_pending_affiliates' }, {});
+  }
+
+  @Get('/count/rejected')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  countRejectedAffiliates() {
+    return this.affiliateClient.send({ cmd: 'count_rejected_affiliates' }, {});
+  }
+
+  @Get('/count/coupons')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  countAllCoupons() {
+    return this.affiliateClient.send({ cmd: 'count_all_coupons' }, {});
+  }
+
 }

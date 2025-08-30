@@ -278,6 +278,16 @@ export class UsersServiceController {
       return { success: false, message: error.message };
     }
   }
+
+  @MessagePattern({ cmd: 'count_all_users' })
+  async countAllUsers() {
+    return await this.usersService.countAllUsers();
+  }
+
+  @MessagePattern({ cmd: 'count_active_users' })
+  async countActiveUsers() {
+    return await this.usersService.countActiveUsers();
+  }
 }
 
 

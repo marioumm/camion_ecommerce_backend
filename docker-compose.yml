@@ -112,6 +112,21 @@ services:
     depends_on:
       - postgres_db
 
+  settings-service:
+      build:
+        context: .
+        dockerfile: Dockerfile
+      command: node dist/apps/settings-service/main
+      container_name: settings-service
+      env_file:
+        - .env
+      ports:
+        - "${SETTINGS_TCP_PORT}:${SETTINGS_TCP_PORT}"
+      networks:
+        - backend
+      depends_on:
+        - postgres_db
+
 
   api-gateway:
     build:

@@ -328,6 +328,56 @@ var AffiliateServiceController = /** @class */ (function () {
             });
         });
     };
+    AffiliateServiceController.prototype.countAllAffiliates = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, this.affiliateService.countAllAffiliates()];
+                    case 1: return [2 /*return*/, _a.sent()];
+                }
+            });
+        });
+    };
+    AffiliateServiceController.prototype.countApprovedAffiliates = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, this.affiliateService.countApprovedAffiliates()];
+                    case 1: return [2 /*return*/, _a.sent()];
+                }
+            });
+        });
+    };
+    AffiliateServiceController.prototype.countPendingAffiliates = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, this.affiliateService.countPendingAffiliates()];
+                    case 1: return [2 /*return*/, _a.sent()];
+                }
+            });
+        });
+    };
+    AffiliateServiceController.prototype.countRejectedAffiliates = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, this.affiliateService.countRejectedAffiliates()];
+                    case 1: return [2 /*return*/, _a.sent()];
+                }
+            });
+        });
+    };
+    AffiliateServiceController.prototype.countAllCoupons = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, this.affiliateService.countAllCoupons()];
+                    case 1: return [2 /*return*/, _a.sent()];
+                }
+            });
+        });
+    };
     __decorate([
         microservices_1.MessagePattern({ cmd: 'create_affiliate_request' }),
         __param(0, microservices_1.Payload())
@@ -385,6 +435,21 @@ var AffiliateServiceController = /** @class */ (function () {
         microservices_1.MessagePattern({ cmd: 'affiliate.getCouponByCode' }),
         __param(0, microservices_1.Payload())
     ], AffiliateServiceController.prototype, "getCouponByCode");
+    __decorate([
+        microservices_1.MessagePattern({ cmd: 'count_all_affiliates' })
+    ], AffiliateServiceController.prototype, "countAllAffiliates");
+    __decorate([
+        microservices_1.MessagePattern({ cmd: 'count_approved_affiliates' })
+    ], AffiliateServiceController.prototype, "countApprovedAffiliates");
+    __decorate([
+        microservices_1.MessagePattern({ cmd: 'count_pending_affiliates' })
+    ], AffiliateServiceController.prototype, "countPendingAffiliates");
+    __decorate([
+        microservices_1.MessagePattern({ cmd: 'count_rejected_affiliates' })
+    ], AffiliateServiceController.prototype, "countRejectedAffiliates");
+    __decorate([
+        microservices_1.MessagePattern({ cmd: 'count_all_coupons' })
+    ], AffiliateServiceController.prototype, "countAllCoupons");
     AffiliateServiceController = __decorate([
         common_1.UsePipes(new common_1.ValidationPipe({
             exceptionFactory: function (errors) {

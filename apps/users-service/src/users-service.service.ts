@@ -489,8 +489,6 @@ export class UsersService {
   return this.userRepository.save(user);
   }
 
-
-
   async updateUserCurrency(userId: string, currency: string): Promise<User> {
     const normalizedCurrency = currency.toUpperCase();
 
@@ -541,6 +539,22 @@ export class UsersService {
 
     return user;
   }
+
+  async countAllUsers() {
+  try {
+    return await this.userRepository.count();
+  } catch (error) {
+    throw toRpc(error, 'Failed to count users');
+  }
+}
+
+async countActiveUsers() {
+  try {
+    return await this.userRepository.count({ where: { isActive: true } });
+  } catch (error) {
+    throw toRpc(error, 'Failed to count active users');
+  }
+}
 
 }
 

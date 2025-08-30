@@ -430,6 +430,26 @@ var UsersServiceController = /** @class */ (function () {
             });
         });
     };
+    UsersServiceController.prototype.countAllUsers = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, this.usersService.countAllUsers()];
+                    case 1: return [2 /*return*/, _a.sent()];
+                }
+            });
+        });
+    };
+    UsersServiceController.prototype.countActiveUsers = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, this.usersService.countActiveUsers()];
+                    case 1: return [2 /*return*/, _a.sent()];
+                }
+            });
+        });
+    };
     __decorate([
         microservices_1.MessagePattern({ cmd: 'register_user' }),
         __param(0, microservices_1.Payload())
@@ -521,6 +541,12 @@ var UsersServiceController = /** @class */ (function () {
     __decorate([
         microservices_1.MessagePattern('seed_currencies')
     ], UsersServiceController.prototype, "seedCurrencies");
+    __decorate([
+        microservices_1.MessagePattern({ cmd: 'count_all_users' })
+    ], UsersServiceController.prototype, "countAllUsers");
+    __decorate([
+        microservices_1.MessagePattern({ cmd: 'count_active_users' })
+    ], UsersServiceController.prototype, "countActiveUsers");
     UsersServiceController = __decorate([
         common_1.UsePipes(new common_1.ValidationPipe({
             exceptionFactory: function (errors) {

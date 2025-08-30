@@ -725,6 +725,40 @@ var UsersService = /** @class */ (function () {
             });
         });
     };
+    UsersService.prototype.countAllUsers = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            var error_12;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        _a.trys.push([0, 2, , 3]);
+                        return [4 /*yield*/, this.userRepository.count()];
+                    case 1: return [2 /*return*/, _a.sent()];
+                    case 2:
+                        error_12 = _a.sent();
+                        throw toRpc(error_12, 'Failed to count users');
+                    case 3: return [2 /*return*/];
+                }
+            });
+        });
+    };
+    UsersService.prototype.countActiveUsers = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            var error_13;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        _a.trys.push([0, 2, , 3]);
+                        return [4 /*yield*/, this.userRepository.count({ where: { isActive: true } })];
+                    case 1: return [2 /*return*/, _a.sent()];
+                    case 2:
+                        error_13 = _a.sent();
+                        throw toRpc(error_13, 'Failed to count active users');
+                    case 3: return [2 /*return*/];
+                }
+            });
+        });
+    };
     UsersService = __decorate([
         common_1.Injectable(),
         __param(0, typeorm_1.InjectRepository(user_entity_1.User)),

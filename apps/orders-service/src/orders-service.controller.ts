@@ -27,7 +27,7 @@ export class OrdersController {
     private readonly ordersService: OrdersService,
     @InjectRepository(CartItem)
     private readonly cartRepository: Repository<CartItem>,
-      @InjectRepository(Order) 
+    @InjectRepository(Order)
     private readonly orderRepository: Repository<Order>,
   ) { }
 
@@ -158,37 +158,57 @@ export class OrdersController {
   }
 
   @MessagePattern('get_order_with_items')
-async getOrderWithItems(@Payload() data: { orderId: string; userId: string }) {
-  const order = await this.orderRepository.findOne({
-    where: { id: data.orderId, userId: data.userId },
-  });
+  async getOrderWithItems(@Payload() data: { orderId: string; userId: string }) {
+    const order = await this.orderRepository.findOne({
+      where: { id: data.orderId, userId: data.userId },
+    });
 
-  return order ? {
-    id: order.id,
-    userId: order.userId,
-    status: order.isDelivered ? 'delivered' : (order.isPaid ? 'paid' : order.wcOrderStatus),
-    isDelivered: order.isDelivered,
-    isPaid: order.isPaid,
-    items: Array.isArray(order.items) ? order.items : [],
-  } : null;
-}
+    return order ? {
+      id: order.id,
+      userId: order.userId,
+      status: order.isDelivered ? 'delivered' : (order.isPaid ? 'paid' : order.wcOrderStatus),
+      isDelivered: order.isDelivered,
+      isPaid: order.isPaid,
+      items: Array.isArray(order.items) ? order.items : [],
+    } : null;
+  }
 
-@MessagePattern('get_user_completed_orders')
-async getUserCompletedOrders(@Payload() data: { userId: string }) {
-  const orders = await this.orderRepository.find({
-    where: { userId: data.userId, isDelivered: true },
-  });
+  @MessagePattern('get_user_completed_orders')
+  async getUserCompletedOrders(@Payload() data: { userId: string }) {
+    const orders = await this.orderRepository.find({
+      where: { userId: data.userId, isDelivered: true },
+    });
 
-  return orders.map(order => ({
-    id: order.id,
-    userId: order.userId,
-    status: 'delivered',
-    isDelivered: order.isDelivered,
-    isPaid: order.isPaid,
-    deliveredAt: order.deliveredAt,
-    items: Array.isArray(order.items) ? order.items : [],
-  }));
-}
+    return orders.map(order => ({
+      id: order.id,
+      userId: order.userId,
+      status: 'delivered',
+      isDelivered: order.isDelivered,
+      isPaid: order.isPaid,
+      deliveredAt: order.deliveredAt,
+      items: Array.isArray(order.items) ? order.items : [],
+    }));
+  }
+
+  @MessagePattern({ cmd: 'count_all_orders' })
+  async countAllOrders() {
+    return await this.ordersService.countAllOrders();
+  }
+
+  @MessagePattern({ cmd: 'count_completed_orders' })
+  async countCompletedOrders() {
+    return await this.ordersService.countCompletedOrders();
+  }
+
+  @MessagePattern({ cmd: 'count_pending_orders' })
+  async countPendingOrders() {
+    return await this.ordersService.countPendingOrders();
+  }
+
+  @MessagePattern({ cmd: 'count_cancelled_orders' })
+  async countCancelledOrders() {
+    return await this.ordersService.countCancelledOrders();
+  }
 
 
 

@@ -520,6 +520,38 @@ export class OrdersService {
     }
   }
 
+  async countAllOrders() {
+    try {
+      return await this.orderRepository.count();
+    } catch (error) {
+      throw toRpc(error, 'Failed to count all orders');
+    }
+  }
+
+  async countCompletedOrders() {
+    try {
+      return await this.orderRepository.count({ where: { isPaid: true, isDelivered: true } });
+    } catch (error) {
+      throw toRpc(error, 'Failed to count completed orders');
+    }
+  }
+
+  async countPendingOrders() {
+    try {
+      return await this.orderRepository.count({ where: { isPaid: false, isDelivered: false } });
+    } catch (error) {
+      throw toRpc(error, 'Failed to count pending orders');
+    }
+  }
+
+  async countCancelledOrders() {
+    try {
+      return await this.orderRepository.count({ where: { wcOrderStatus: 'cancelled' } });
+    } catch (error) {
+      throw toRpc(error, 'Failed to count cancelled orders');
+    }
+  }
+
 }
 
 function toRpc(error: any, fallbackMsg?: string) {

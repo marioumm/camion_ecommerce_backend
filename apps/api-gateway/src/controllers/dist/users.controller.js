@@ -138,6 +138,12 @@ var UserController = /** @class */ (function () {
             });
         });
     };
+    UserController.prototype.countAllUsers = function () {
+        return this.usersClient.send({ cmd: 'count_all_users' }, {});
+    };
+    UserController.prototype.countActiveUsers = function () {
+        return this.usersClient.send({ cmd: 'count_active_users' }, {});
+    };
     __decorate([
         common_1.Post('auth/register'),
         __param(0, common_1.Body())
@@ -219,6 +225,16 @@ var UserController = /** @class */ (function () {
         common_1.Get(':id/preferences'),
         __param(0, common_1.Param('id'))
     ], UserController.prototype, "getUserPreferences");
+    __decorate([
+        common_1.Get('/count/all'),
+        common_1.UseGuards(src_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+        roles_decorator_1.Roles(user_entity_1.UserRole.ADMIN)
+    ], UserController.prototype, "countAllUsers");
+    __decorate([
+        common_1.Get('/count/active'),
+        common_1.UseGuards(src_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+        roles_decorator_1.Roles(user_entity_1.UserRole.ADMIN)
+    ], UserController.prototype, "countActiveUsers");
     UserController = __decorate([
         common_1.Controller('users'),
         __param(0, common_1.Inject('USERS_SERVICE')),

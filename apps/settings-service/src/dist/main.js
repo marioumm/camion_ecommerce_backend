@@ -36,53 +36,34 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 exports.__esModule = true;
-/* eslint-disable @typescript-eslint/no-unsafe-call */
 var core_1 = require("@nestjs/core");
-var app_module_1 = require("./app.module");
+var settings_service_module_1 = require("./settings-service.module");
+var path = require("path");
 var dotenv = require("dotenv");
 var microservices_1 = require("@nestjs/microservices");
 var common_1 = require("@nestjs/common");
-var path_1 = require("path");
-// import { JwtAuthGuard } from '@app/auth';
-var helmet_1 = require("helmet");
-var bodyParser = require("body-parser");
-dotenv.config();
-dotenv.config({ path: __dirname + '../../../.env' });
+dotenv.config({ path: path.join(__dirname, '..', '..', '.env') });
 function bootstrap() {
     return __awaiter(this, void 0, void 0, function () {
         var app;
         return __generator(this, function (_a) {
             switch (_a.label) {
-                case 0: return [4 /*yield*/, core_1.NestFactory.create(app_module_1.AppModule)];
+                case 0: return [4 /*yield*/, core_1.NestFactory.createMicroservice(settings_service_module_1.SettingsServiceModule, {
+                        transport: microservices_1.Transport.TCP,
+                        options: {
+                            host: process.env.TCP_BIND_HOST || '0.0.0.0',
+                            port: Number(process.env.SETTINGS_TCP_PORT)
+                        }
+                    })];
                 case 1:
                     app = _a.sent();
-                    app.enableCors({
-                        origin: '*',
-                        methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE'],
-                        credentials: true
-                    });
-                    app.use(helmet_1["default"]());
-                    app.useStaticAssets(path_1.join(process.cwd(), 'uploads'), {
-                        prefix: '/uploads/'
-                    });
                     app.useGlobalPipes(new common_1.ValidationPipe({
                         whitelist: true,
                         forbidNonWhitelisted: true,
                         transform: true
                     }));
-                    return [4 /*yield*/, app.listen(process.env.API_GATEWAY_HTTP_PORT || 5000)];
+                    return [4 /*yield*/, app.listen()];
                 case 2:
-                    _a.sent();
-                    app.connectMicroservice({
-                        transport: microservices_1.Transport.TCP,
-                        options: {
-                            host: process.env.TCP_HOST,
-                            port: parseInt(process.env.API_GATEWAY_TCP_PORT || '4000')
-                        }
-                    });
-                    app.use('/orders/stripe-webhook', bodyParser.raw({ type: 'application/json' }));
-                    return [4 /*yield*/, app.startAllMicroservices()];
-                case 3:
                     _a.sent();
                     return [2 /*return*/];
             }

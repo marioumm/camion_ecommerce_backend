@@ -329,6 +329,46 @@ var OrdersController = /** @class */ (function () {
             });
         });
     };
+    OrdersController.prototype.countAllOrders = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, this.ordersService.countAllOrders()];
+                    case 1: return [2 /*return*/, _a.sent()];
+                }
+            });
+        });
+    };
+    OrdersController.prototype.countCompletedOrders = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, this.ordersService.countCompletedOrders()];
+                    case 1: return [2 /*return*/, _a.sent()];
+                }
+            });
+        });
+    };
+    OrdersController.prototype.countPendingOrders = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, this.ordersService.countPendingOrders()];
+                    case 1: return [2 /*return*/, _a.sent()];
+                }
+            });
+        });
+    };
+    OrdersController.prototype.countCancelledOrders = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, this.ordersService.countCancelledOrders()];
+                    case 1: return [2 /*return*/, _a.sent()];
+                }
+            });
+        });
+    };
     OrdersController.prototype.mapOrderResponse = function (order) {
         var _a;
         return {
@@ -421,6 +461,18 @@ var OrdersController = /** @class */ (function () {
         microservices_1.MessagePattern('get_user_completed_orders'),
         __param(0, microservices_1.Payload())
     ], OrdersController.prototype, "getUserCompletedOrders");
+    __decorate([
+        microservices_1.MessagePattern({ cmd: 'count_all_orders' })
+    ], OrdersController.prototype, "countAllOrders");
+    __decorate([
+        microservices_1.MessagePattern({ cmd: 'count_completed_orders' })
+    ], OrdersController.prototype, "countCompletedOrders");
+    __decorate([
+        microservices_1.MessagePattern({ cmd: 'count_pending_orders' })
+    ], OrdersController.prototype, "countPendingOrders");
+    __decorate([
+        microservices_1.MessagePattern({ cmd: 'count_cancelled_orders' })
+    ], OrdersController.prototype, "countCancelledOrders");
     OrdersController = __decorate([
         common_1.Controller(),
         common_1.UsePipes(new common_1.ValidationPipe({

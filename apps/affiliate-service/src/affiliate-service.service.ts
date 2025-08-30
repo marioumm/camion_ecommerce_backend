@@ -29,7 +29,7 @@ export class AffiliateServiceService {
     private readonly affiliateRepository: Repository<Affiliate>,
     @InjectRepository(Coupon)
     private readonly couponRepository: Repository<Coupon>,
-    @InjectRepository(AffiliateTransaction) 
+    @InjectRepository(AffiliateTransaction)
     private readonly affiliateTransactionRepository: Repository<AffiliateTransaction>,
     @Inject('USER_SERVICE') private readonly userClient: ClientProxy,
     @Inject('NOTIFICATIONS_SERVICE') private readonly notificationsClient: ClientProxy,
@@ -318,39 +318,39 @@ export class AffiliateServiceService {
     }
   }
 
- async addAffiliateCommission(couponCode: string, saleAmount: number) {
-  const coupon = await this.couponRepository.findOne({
-    where: { code: couponCode, isActive: true },
-    relations: ['affiliate'],
-  });
+  async addAffiliateCommission(couponCode: string, saleAmount: number) {
+    const coupon = await this.couponRepository.findOne({
+      where: { code: couponCode, isActive: true },
+      relations: ['affiliate'],
+    });
 
-  if (!coupon || !coupon.affiliate) {
-    throw new RpcException({ statusCode: 404, message: 'Coupon or affiliate not found' });
+    if (!coupon || !coupon.affiliate) {
+      throw new RpcException({ statusCode: 404, message: 'Coupon or affiliate not found' });
+    }
+
+    const affiliate = coupon.affiliate;
+    const commission = saleAmount * 0.2;
+
+    affiliate.walletBalance += commission;
+    affiliate.totalEarnings += commission;
+
+    await this.affiliateRepository.save(affiliate);
+
+    const transaction = this.affiliateTransactionRepository.create({
+      affiliate,
+      amount: commission,
+      description: `Commission from coupon ${couponCode} on sale ${saleAmount}`,
+    });
+    await this.affiliateTransactionRepository.save(transaction);
+
+    await this.sendNotification(
+      affiliate.userId,
+      'New Commission Added',
+      `You earned a commission of ${commission.toFixed(2)} from a sale using your coupon ${couponCode}.`
+    );
+
+    return { commission, walletBalance: affiliate.walletBalance };
   }
-
-  const affiliate = coupon.affiliate;
-  const commission = saleAmount * 0.2;
-
-  affiliate.walletBalance += commission;
-  affiliate.totalEarnings += commission;
-
-  await this.affiliateRepository.save(affiliate);
-
-  const transaction = this.affiliateTransactionRepository.create({
-    affiliate,
-    amount: commission,
-    description: `Commission from coupon ${couponCode} on sale ${saleAmount}`,
-  });
-  await this.affiliateTransactionRepository.save(transaction);
-
-  await this.sendNotification(
-    affiliate.userId,
-    'New Commission Added',
-    `You earned a commission of ${commission.toFixed(2)} from a sale using your coupon ${couponCode}.`
-  );
-
-  return { commission, walletBalance: affiliate.walletBalance };
-}
 
 
   async getWalletBalance(userId: string) {
@@ -419,5 +419,44 @@ export class AffiliateServiceService {
     }
   }
 
+  async countAllAffiliates() {
+    try {
+      return await this.affiliateRepository.count();
+    } catch (error) {
+      throw new RpcException({ statusCode: 500, message: error?.message || 'Failed to count affiliates' });
+    }
+  }
+
+  async countApprovedAffiliates() {
+    try {
+      return await this.affiliateRepository.count({ where: { status: AffiliateStatus.APPROVED } });
+    } catch (error) {
+      throw new RpcException({ statusCode: 500, message: error?.message || 'Failed to count approved affiliates' });
+    }
+  }
+
+  async countPendingAffiliates() {
+    try {
+      return await this.affiliateRepository.count({ where: { status: AffiliateStatus.PENDING } });
+    } catch (error) {
+      throw new RpcException({ statusCode: 500, message: error?.message || 'Failed to count pending affiliates' });
+    }
+  }
+
+  async countRejectedAffiliates() {
+    try {
+      return await this.affiliateRepository.count({ where: { status: AffiliateStatus.REJECTED } });
+    } catch (error) {
+      throw new RpcException({ statusCode: 500, message: error?.message || 'Failed to count rejected affiliates' });
+    }
+  }
+
+  async countAllCoupons() {
+    try {
+      return await this.couponRepository.count();
+    } catch (error) {
+      throw new RpcException({ statusCode: 500, message: error?.message || 'Failed to count coupons' });
+    }
+  }
 
 }

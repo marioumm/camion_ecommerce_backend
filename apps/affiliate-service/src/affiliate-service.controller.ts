@@ -178,4 +178,29 @@ export class AffiliateServiceController {
     return this.affiliateService.getCouponByCode(data.code);
   }
 
+  @MessagePattern({ cmd: 'count_all_affiliates' })
+  async countAllAffiliates() {
+    return await this.affiliateService.countAllAffiliates();
+  }
+
+  @MessagePattern({ cmd: 'count_approved_affiliates' })
+  async countApprovedAffiliates() {
+    return await this.affiliateService.countApprovedAffiliates();
+  }
+
+  @MessagePattern({ cmd: 'count_pending_affiliates' })
+  async countPendingAffiliates() {
+    return await this.affiliateService.countPendingAffiliates();
+  }
+
+  @MessagePattern({ cmd: 'count_rejected_affiliates' })
+  async countRejectedAffiliates() {
+    return await this.affiliateService.countRejectedAffiliates();
+  }
+
+  @MessagePattern({ cmd: 'count_all_coupons' })
+  async countAllCoupons() {
+    return await this.affiliateService.countAllCoupons();
+  }
+
 }

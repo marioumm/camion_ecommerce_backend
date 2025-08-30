@@ -71,6 +71,21 @@ var AffiliateController = /** @class */ (function () {
     AffiliateController.prototype.getWalletTransactions = function (userId) {
         return this.affiliateClient.send({ cmd: 'affiliate.getWalletTransactions' }, { userId: userId });
     };
+    AffiliateController.prototype.countAllAffiliates = function () {
+        return this.affiliateClient.send({ cmd: 'count_all_affiliates' }, {});
+    };
+    AffiliateController.prototype.countApprovedAffiliates = function () {
+        return this.affiliateClient.send({ cmd: 'count_approved_affiliates' }, {});
+    };
+    AffiliateController.prototype.countPendingAffiliates = function () {
+        return this.affiliateClient.send({ cmd: 'count_pending_affiliates' }, {});
+    };
+    AffiliateController.prototype.countRejectedAffiliates = function () {
+        return this.affiliateClient.send({ cmd: 'count_rejected_affiliates' }, {});
+    };
+    AffiliateController.prototype.countAllCoupons = function () {
+        return this.affiliateClient.send({ cmd: 'count_all_coupons' }, {});
+    };
     __decorate([
         common_1.UseGuards(src_1.JwtAuthGuard, roles_guard_1.RolesGuard),
         roles_decorator_1.Roles(user_entity_1.UserRole.USER),
@@ -149,6 +164,31 @@ var AffiliateController = /** @class */ (function () {
         common_1.Get('wallet/transactions'),
         __param(0, current_user_decorator_1.CurrentUserId())
     ], AffiliateController.prototype, "getWalletTransactions");
+    __decorate([
+        common_1.Get('/count/all'),
+        common_1.UseGuards(src_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+        roles_decorator_1.Roles(user_entity_1.UserRole.ADMIN)
+    ], AffiliateController.prototype, "countAllAffiliates");
+    __decorate([
+        common_1.Get('/count/approved'),
+        common_1.UseGuards(src_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+        roles_decorator_1.Roles(user_entity_1.UserRole.ADMIN)
+    ], AffiliateController.prototype, "countApprovedAffiliates");
+    __decorate([
+        common_1.Get('/count/pending'),
+        common_1.UseGuards(src_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+        roles_decorator_1.Roles(user_entity_1.UserRole.ADMIN)
+    ], AffiliateController.prototype, "countPendingAffiliates");
+    __decorate([
+        common_1.Get('/count/rejected'),
+        common_1.UseGuards(src_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+        roles_decorator_1.Roles(user_entity_1.UserRole.ADMIN)
+    ], AffiliateController.prototype, "countRejectedAffiliates");
+    __decorate([
+        common_1.Get('/count/coupons'),
+        common_1.UseGuards(src_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+        roles_decorator_1.Roles(user_entity_1.UserRole.ADMIN)
+    ], AffiliateController.prototype, "countAllCoupons");
     AffiliateController = __decorate([
         common_1.Controller('affiliates'),
         __param(0, common_1.Inject('AFFILIATE_SERVICE'))

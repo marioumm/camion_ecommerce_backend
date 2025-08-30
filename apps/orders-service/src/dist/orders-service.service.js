@@ -634,6 +634,74 @@ var OrdersService = /** @class */ (function () {
             });
         });
     };
+    OrdersService.prototype.countAllOrders = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            var error_14;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        _a.trys.push([0, 2, , 3]);
+                        return [4 /*yield*/, this.orderRepository.count()];
+                    case 1: return [2 /*return*/, _a.sent()];
+                    case 2:
+                        error_14 = _a.sent();
+                        throw toRpc(error_14, 'Failed to count all orders');
+                    case 3: return [2 /*return*/];
+                }
+            });
+        });
+    };
+    OrdersService.prototype.countCompletedOrders = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            var error_15;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        _a.trys.push([0, 2, , 3]);
+                        return [4 /*yield*/, this.orderRepository.count({ where: { isPaid: true, isDelivered: true } })];
+                    case 1: return [2 /*return*/, _a.sent()];
+                    case 2:
+                        error_15 = _a.sent();
+                        throw toRpc(error_15, 'Failed to count completed orders');
+                    case 3: return [2 /*return*/];
+                }
+            });
+        });
+    };
+    OrdersService.prototype.countPendingOrders = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            var error_16;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        _a.trys.push([0, 2, , 3]);
+                        return [4 /*yield*/, this.orderRepository.count({ where: { isPaid: false, isDelivered: false } })];
+                    case 1: return [2 /*return*/, _a.sent()];
+                    case 2:
+                        error_16 = _a.sent();
+                        throw toRpc(error_16, 'Failed to count pending orders');
+                    case 3: return [2 /*return*/];
+                }
+            });
+        });
+    };
+    OrdersService.prototype.countCancelledOrders = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            var error_17;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        _a.trys.push([0, 2, , 3]);
+                        return [4 /*yield*/, this.orderRepository.count({ where: { wcOrderStatus: 'cancelled' } })];
+                    case 1: return [2 /*return*/, _a.sent()];
+                    case 2:
+                        error_17 = _a.sent();
+                        throw toRpc(error_17, 'Failed to count cancelled orders');
+                    case 3: return [2 /*return*/];
+                }
+            });
+        });
+    };
     var OrdersService_1;
     OrdersService = OrdersService_1 = __decorate([
         common_1.Injectable(),

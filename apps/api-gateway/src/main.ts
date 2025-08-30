@@ -1,8 +1,11 @@
+/* eslint-disable @typescript-eslint/no-unsafe-call */
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import * as dotenv from 'dotenv';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { ValidationPipe } from '@nestjs/common';
+import { join } from 'path';
+import { NestExpressApplication } from '@nestjs/platform-express'; 
 // import { JwtAuthGuard } from '@app/auth';
 import helmet from 'helmet';
 import * as bodyParser from 'body-parser';
@@ -12,7 +15,7 @@ dotenv.config();
 dotenv.config({ path: __dirname + '../../../.env' });
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
 
 
@@ -23,6 +26,10 @@ async function bootstrap() {
   });
 
   app.use(helmet());
+
+   app.useStaticAssets(join(process.cwd(), 'uploads'), {
+    prefix: '/uploads/',
+  });
 
 
   app.useGlobalPipes(

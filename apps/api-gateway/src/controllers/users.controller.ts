@@ -161,5 +161,18 @@ export class UserController {
     );
   }
 
+  @Get('/count/all')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  countAllUsers() {
+    return this.usersClient.send({ cmd: 'count_all_users' }, {});
+  }
+
+  @Get('/count/active')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  countActiveUsers() {
+    return this.usersClient.send({ cmd: 'count_active_users' }, {});
+  }
 
 }

@@ -571,6 +571,91 @@ var AffiliateServiceService = /** @class */ (function () {
             });
         });
     };
+    AffiliateServiceService.prototype.countAllAffiliates = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            var error_12;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        _a.trys.push([0, 2, , 3]);
+                        return [4 /*yield*/, this.affiliateRepository.count()];
+                    case 1: return [2 /*return*/, _a.sent()];
+                    case 2:
+                        error_12 = _a.sent();
+                        throw new microservices_1.RpcException({ statusCode: 500, message: (error_12 === null || error_12 === void 0 ? void 0 : error_12.message) || 'Failed to count affiliates' });
+                    case 3: return [2 /*return*/];
+                }
+            });
+        });
+    };
+    AffiliateServiceService.prototype.countApprovedAffiliates = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            var error_13;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        _a.trys.push([0, 2, , 3]);
+                        return [4 /*yield*/, this.affiliateRepository.count({ where: { status: affiliate_entity_1.AffiliateStatus.APPROVED } })];
+                    case 1: return [2 /*return*/, _a.sent()];
+                    case 2:
+                        error_13 = _a.sent();
+                        throw new microservices_1.RpcException({ statusCode: 500, message: (error_13 === null || error_13 === void 0 ? void 0 : error_13.message) || 'Failed to count approved affiliates' });
+                    case 3: return [2 /*return*/];
+                }
+            });
+        });
+    };
+    AffiliateServiceService.prototype.countPendingAffiliates = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            var error_14;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        _a.trys.push([0, 2, , 3]);
+                        return [4 /*yield*/, this.affiliateRepository.count({ where: { status: affiliate_entity_1.AffiliateStatus.PENDING } })];
+                    case 1: return [2 /*return*/, _a.sent()];
+                    case 2:
+                        error_14 = _a.sent();
+                        throw new microservices_1.RpcException({ statusCode: 500, message: (error_14 === null || error_14 === void 0 ? void 0 : error_14.message) || 'Failed to count pending affiliates' });
+                    case 3: return [2 /*return*/];
+                }
+            });
+        });
+    };
+    AffiliateServiceService.prototype.countRejectedAffiliates = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            var error_15;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        _a.trys.push([0, 2, , 3]);
+                        return [4 /*yield*/, this.affiliateRepository.count({ where: { status: affiliate_entity_1.AffiliateStatus.REJECTED } })];
+                    case 1: return [2 /*return*/, _a.sent()];
+                    case 2:
+                        error_15 = _a.sent();
+                        throw new microservices_1.RpcException({ statusCode: 500, message: (error_15 === null || error_15 === void 0 ? void 0 : error_15.message) || 'Failed to count rejected affiliates' });
+                    case 3: return [2 /*return*/];
+                }
+            });
+        });
+    };
+    AffiliateServiceService.prototype.countAllCoupons = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            var error_16;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        _a.trys.push([0, 2, , 3]);
+                        return [4 /*yield*/, this.couponRepository.count()];
+                    case 1: return [2 /*return*/, _a.sent()];
+                    case 2:
+                        error_16 = _a.sent();
+                        throw new microservices_1.RpcException({ statusCode: 500, message: (error_16 === null || error_16 === void 0 ? void 0 : error_16.message) || 'Failed to count coupons' });
+                    case 3: return [2 /*return*/];
+                }
+            });
+        });
+    };
     var AffiliateServiceService_1;
     AffiliateServiceService = AffiliateServiceService_1 = __decorate([
         common_1.Injectable(),
