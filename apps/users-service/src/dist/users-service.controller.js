@@ -46,7 +46,6 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 };
 exports.__esModule = true;
 exports.UsersServiceController = void 0;
-/* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
@@ -70,10 +69,8 @@ function mapException(error) {
     });
 }
 var UsersServiceController = /** @class */ (function () {
-    function UsersServiceController(usersService, currencyService, currencySeeder) {
+    function UsersServiceController(usersService) {
         this.usersService = usersService;
-        this.currencyService = currencyService;
-        this.currencySeeder = currencySeeder;
     }
     UsersServiceController.prototype.register = function (dto) {
         return __awaiter(this, void 0, void 0, function () {
@@ -322,110 +319,9 @@ var UsersServiceController = /** @class */ (function () {
     UsersServiceController.prototype.getUserAddress = function (userId) {
         return __awaiter(this, void 0, void 0, function () {
             return __generator(this, function (_a) {
-                return [2 /*return*/, this.usersService.getUserAddress(userId)];
-            });
-        });
-    };
-    UsersServiceController.prototype.updateUserCurrency = function (data) {
-        return __awaiter(this, void 0, void 0, function () {
-            return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4 /*yield*/, this.usersService.updateUserCurrency(data.userId, data.currency)];
+                    case 0: return [4 /*yield*/, this.usersService.getUserAddress(userId)];
                     case 1: return [2 /*return*/, _a.sent()];
-                }
-            });
-        });
-    };
-    UsersServiceController.prototype.getUserPreferences = function (data) {
-        return __awaiter(this, void 0, void 0, function () {
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0: return [4 /*yield*/, this.usersService.getUserWithPreferences(data.userId)];
-                    case 1: return [2 /*return*/, _a.sent()];
-                }
-            });
-        });
-    };
-    UsersServiceController.prototype.getCurrencies = function () {
-        return __awaiter(this, void 0, void 0, function () {
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0: return [4 /*yield*/, this.currencyService.getAllCurrencies()];
-                    case 1: return [2 /*return*/, _a.sent()];
-                }
-            });
-        });
-    };
-    UsersServiceController.prototype.convertProductsCurrency = function (data) {
-        return __awaiter(this, void 0, void 0, function () {
-            var userId, products, user, userCurrency;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        userId = data.userId, products = data.products;
-                        return [4 /*yield*/, this.usersService.getUserWithPreferences(userId)];
-                    case 1:
-                        user = _a.sent();
-                        userCurrency = user.preferredCurrency || 'QAR';
-                        return [4 /*yield*/, this.currencyService.convertWooCommerceProducts(products, userCurrency)];
-                    case 2: return [2 /*return*/, _a.sent()];
-                }
-            });
-        });
-    };
-    UsersServiceController.prototype.convertSinglePrice = function (data) {
-        return __awaiter(this, void 0, void 0, function () {
-            var userId, amount, _a, fromCurrency, user, userCurrency, convertedAmount, currency;
-            return __generator(this, function (_b) {
-                switch (_b.label) {
-                    case 0:
-                        userId = data.userId, amount = data.amount, _a = data.fromCurrency, fromCurrency = _a === void 0 ? 'QAR' : _a;
-                        return [4 /*yield*/, this.usersService.getUserWithPreferences(userId)];
-                    case 1:
-                        user = _b.sent();
-                        userCurrency = user.preferredCurrency || 'QAR';
-                        return [4 /*yield*/, this.currencyService.convertPrice(amount, fromCurrency, userCurrency)];
-                    case 2:
-                        convertedAmount = _b.sent();
-                        return [4 /*yield*/, this.currencyService.getCurrencyByCode(userCurrency)];
-                    case 3:
-                        currency = _b.sent();
-                        return [2 /*return*/, {
-                                originalAmount: amount,
-                                originalCurrency: fromCurrency,
-                                convertedAmount: convertedAmount,
-                                currency: userCurrency,
-                                currencySymbol: (currency === null || currency === void 0 ? void 0 : currency.symbol) || userCurrency
-                            }];
-                }
-            });
-        });
-    };
-    UsersServiceController.prototype.updateExchangeRates = function () {
-        return __awaiter(this, void 0, void 0, function () {
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0: return [4 /*yield*/, this.currencyService.updateExchangeRates()];
-                    case 1: return [2 /*return*/, _a.sent()];
-                }
-            });
-        });
-    };
-    UsersServiceController.prototype.seedCurrencies = function () {
-        return __awaiter(this, void 0, void 0, function () {
-            var error_13;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        _a.trys.push([0, 2, , 3]);
-                        return [4 /*yield*/, this.currencySeeder.seed()];
-                    case 1:
-                        _a.sent();
-                        return [2 /*return*/, { success: true, message: 'Currency seeding completed successfully!' }];
-                    case 2:
-                        error_13 = _a.sent();
-                        return [2 /*return*/, { success: false, message: error_13.message }];
-                    case 3: return [2 /*return*/];
                 }
             });
         });
@@ -520,27 +416,6 @@ var UsersServiceController = /** @class */ (function () {
         microservices_1.MessagePattern({ cmd: 'getUserAddress' }),
         __param(0, microservices_1.Payload())
     ], UsersServiceController.prototype, "getUserAddress");
-    __decorate([
-        microservices_1.MessagePattern({ cmd: 'update_user_currency' })
-    ], UsersServiceController.prototype, "updateUserCurrency");
-    __decorate([
-        microservices_1.MessagePattern('get_user_preferences')
-    ], UsersServiceController.prototype, "getUserPreferences");
-    __decorate([
-        microservices_1.MessagePattern('get_currencies')
-    ], UsersServiceController.prototype, "getCurrencies");
-    __decorate([
-        microservices_1.MessagePattern('convert_products_currency')
-    ], UsersServiceController.prototype, "convertProductsCurrency");
-    __decorate([
-        microservices_1.MessagePattern('convert_single_price')
-    ], UsersServiceController.prototype, "convertSinglePrice");
-    __decorate([
-        microservices_1.MessagePattern('update_exchange_rates')
-    ], UsersServiceController.prototype, "updateExchangeRates");
-    __decorate([
-        microservices_1.MessagePattern('seed_currencies')
-    ], UsersServiceController.prototype, "seedCurrencies");
     __decorate([
         microservices_1.MessagePattern({ cmd: 'count_all_users' })
     ], UsersServiceController.prototype, "countAllUsers");

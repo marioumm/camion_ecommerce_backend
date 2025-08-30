@@ -55,20 +55,6 @@ var User = /** @class */ (function () {
         typeorm_1.Column({ "default": true })
     ], User.prototype, "isFirstLogin");
     __decorate([
-        typeorm_1.Column({
-            length: 3,
-            name: 'preferred_currency',
-            nullable: true
-        })
-    ], User.prototype, "preferredCurrency");
-    __decorate([
-        typeorm_1.Column({
-            length: 5,
-            name: 'preferred_locale',
-            nullable: true
-        })
-    ], User.prototype, "preferredLocale");
-    __decorate([
         typeorm_1.CreateDateColumn({ type: 'timestamp' })
     ], User.prototype, "createdAt");
     __decorate([

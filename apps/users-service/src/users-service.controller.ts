@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
@@ -21,8 +20,6 @@ import { FilterUsersDto } from './dto/filter-users.dto';
 import { CreateUserDto } from './dto/create-user.dto';
 import { LoginAdminDto } from './dto/login-admin.dto';
 import { UserRole } from './entities/user.entity';
-import { CurrencyService } from './currency.service';
-import { CurrencySeeder } from './database/currency.seeder';
 
 function mapException(error: any) {
   if (error instanceof RpcException) return error;
@@ -56,8 +53,6 @@ function mapException(error: any) {
 @Controller()
 export class UsersServiceController {
   constructor(private readonly usersService: UsersService,
-    private readonly currencyService: CurrencyService,
-    private readonly currencySeeder: CurrencySeeder
   ) { }
 
   @MessagePattern({ cmd: 'register_user' })
@@ -179,7 +174,7 @@ export class UsersServiceController {
   }
 
 
-  @MessagePattern({ cmd: 'delete_user' })
+ @MessagePattern({ cmd: 'delete_user' })
   async deleteUser(@Payload() id: string) {
     try {
       await this.usersService.deleteUser(id);
@@ -202,82 +197,10 @@ export class UsersServiceController {
 
   @MessagePattern({ cmd: 'getUserAddress' })
   async getUserAddress(@Payload() userId: string) {
-    return this.usersService.getUserAddress(userId);
+    return await this.usersService.getUserAddress(userId);
   }
 
 
-  @MessagePattern({ cmd: 'update_user_currency' })
-  async updateUserCurrency(data: { userId: string; currency: string }) {
-    return await this.usersService.updateUserCurrency(data.userId, data.currency);
-  }
-
-  @MessagePattern('get_user_preferences')
-  async getUserPreferences(data: { userId: string }) {
-    return await this.usersService.getUserWithPreferences(data.userId);
-  }
-
-
-  @MessagePattern('get_currencies')
-  async getCurrencies() {
-    return await this.currencyService.getAllCurrencies();
-  }
-
-  @MessagePattern('convert_products_currency')
-  async convertProductsCurrency(data: {
-    userId: string;
-    products: any[];
-    fromCurrency?: string;
-  }) {
-    const { userId, products } = data;
-
-    const user = await this.usersService.getUserWithPreferences(userId);
-    const userCurrency = user.preferredCurrency || 'QAR';
-
-    return await this.currencyService.convertWooCommerceProducts(products, userCurrency);
-  }
-
-  @MessagePattern('convert_single_price')
-  async convertSinglePrice(data: {
-    userId: string;
-    amount: number;
-    fromCurrency?: string;
-  }) {
-    const { userId, amount, fromCurrency = 'QAR' } = data;
-
-    const user = await this.usersService.getUserWithPreferences(userId);
-    const userCurrency = user.preferredCurrency || 'QAR';
-
-    const convertedAmount = await this.currencyService.convertPrice(
-      amount,
-      fromCurrency,
-      userCurrency
-    );
-
-    const currency = await this.currencyService.getCurrencyByCode(userCurrency);
-
-    return {
-      originalAmount: amount,
-      originalCurrency: fromCurrency,
-      convertedAmount,
-      currency: userCurrency,
-      currencySymbol: currency?.symbol || userCurrency
-    };
-  }
-
-  @MessagePattern('update_exchange_rates')
-  async updateExchangeRates() {
-    return await this.currencyService.updateExchangeRates();
-  }
-
-  @MessagePattern('seed_currencies')
-  async seedCurrencies() {
-    try {
-      await this.currencySeeder.seed();
-      return { success: true, message: 'Currency seeding completed successfully!' };
-    } catch (error) {
-      return { success: false, message: error.message };
-    }
-  }
 
   @MessagePattern({ cmd: 'count_all_users' })
   async countAllUsers() {

@@ -52,6 +52,7 @@ var common_1 = require("@nestjs/common");
 var user_entity_1 = require("apps/users-service/src/entities/user.entity");
 var src_1 = require("libs/auth/src");
 var current_user_decorator_1 = require("libs/auth/src/current-user.decorator");
+var owner_or_admin_decorator_1 = require("libs/auth/src/owner-or-admin.decorator");
 var roles_decorator_1 = require("libs/auth/src/roles.decorator");
 var roles_guard_1 = require("libs/auth/src/roles.guard");
 var rxjs_1 = require("rxjs");
@@ -189,6 +190,7 @@ var UserController = /** @class */ (function () {
     ], UserController.prototype, "updateUser");
     __decorate([
         common_1.UseGuards(src_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+        owner_or_admin_decorator_1.OwnerOrAdmin(),
         common_1.Delete(':id'),
         __param(0, common_1.Param('id'))
     ], UserController.prototype, "deleteUser");

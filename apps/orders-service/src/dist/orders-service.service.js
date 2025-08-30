@@ -176,7 +176,7 @@ var OrdersService = /** @class */ (function () {
             });
         });
     };
-    OrdersService.prototype.createSkipCashPayment = function (orderId, amount, currency, customerData) {
+    OrdersService.prototype.createSkipCashPayment = function (orderId, amount, customerData) {
         var _a, _b, _c, _d, _e, _f, _g;
         return __awaiter(this, void 0, void 0, function () {
             var url, payload, signature, res, error_3, customMessage;
@@ -189,7 +189,6 @@ var OrdersService = /** @class */ (function () {
                             Uid: this.generateUUID(),
                             KeyId: process.env.SKIPCASH_KEY_ID,
                             Amount: amount.toFixed(2),
-                            Currency: currency,
                             FirstName: customerData.first_name,
                             LastName: customerData.last_name,
                             Phone: customerData.phone,
@@ -264,14 +263,14 @@ var OrdersService = /** @class */ (function () {
         });
     };
     OrdersService.prototype.createOrder = function (userId, items, dto) {
-        var _a, _b, _c, _d;
+        var _a;
         return __awaiter(this, void 0, Promise, function () {
-            var customerData, userPreferences, updatedDto, res, total, originalTotal, discountPercentage, discount, totalAfterDiscount, totalAfterDiscountNum, shippingCostNum, totalAfterDiscountAndShipping, currency, currencySymbol, skipCashPayment, order, couponCode, err_2, error_4;
+            var customerData, updatedDto, res, total, discountPercentage, discount, totalAfterDiscount, totalAfterDiscountNum, shippingCostNum, totalAfterDiscountAndShipping, skipCashPayment, order, couponCode, err_2, error_4;
             var _this = this;
-            return __generator(this, function (_e) {
-                switch (_e.label) {
+            return __generator(this, function (_b) {
+                switch (_b.label) {
                     case 0:
-                        _e.trys.push([0, 14, , 15]);
+                        _b.trys.push([0, 13, , 14]);
                         customerData = dto.customer_data;
                         if (!!customerData) return [3 /*break*/, 2];
                         return [4 /*yield*/, rxjs_1.firstValueFrom(this.usersClient.send({ cmd: 'getUserAddress' }, userId).pipe(rxjs_1.timeout(3000), rxjs_1.catchError(function () {
@@ -279,57 +278,39 @@ var OrdersService = /** @class */ (function () {
                                 return [null];
                             })))];
                     case 1:
-                        customerData = _e.sent();
+                        customerData = _b.sent();
                         if (!customerData) {
                             throw new microservices_1.RpcException('User address data is required');
                         }
-                        _e.label = 2;
+                        _b.label = 2;
                     case 2:
                         if (!dto.customer_data) return [3 /*break*/, 4];
                         return [4 /*yield*/, rxjs_1.firstValueFrom(this.usersClient.send({ cmd: 'updateUserAddress' }, { userId: userId, addressDto: dto.customer_data }))];
                     case 3:
-                        _e.sent();
-                        _e.label = 4;
-                    case 4: return [4 /*yield*/, rxjs_1.firstValueFrom(this.usersClient.send('get_user_preferences', { userId: userId }).pipe(rxjs_1.timeout(3000), rxjs_1.catchError(function () {
-                            _this.logger.warn("User " + userId + " preferences not found, using defaults");
-                            return rxjs_1.of({
-                                preferredCurrency: 'USD',
-                                preferredLocale: 'en'
-                            });
-                        })))];
-                    case 5:
-                        userPreferences = _e.sent();
-                        this.logger.log("User preferences: " + JSON.stringify(userPreferences));
-                        this.logger.log("Items currency: " + ((_a = items[0]) === null || _a === void 0 ? void 0 : _a.currency));
+                        _b.sent();
+                        _b.label = 4;
+                    case 4:
                         updatedDto = __assign(__assign({}, dto), { customer_data: customerData });
                         return [4 /*yield*/, this.createWCOrder(updatedDto, items)];
-                    case 6:
-                        res = _e.sent();
+                    case 5:
+                        res = _b.sent();
                         total = parseFloat(items.reduce(function (sum, item) { var _a, _b; return sum + (Number((_a = item.price) !== null && _a !== void 0 ? _a : 0) * Number((_b = item.quantity) !== null && _b !== void 0 ? _b : 1)); }, 0).toFixed(2));
-                        originalTotal = parseFloat(items.reduce(function (sum, item) { var _a, _b; return sum + (Number((_a = item.originalPrice) !== null && _a !== void 0 ? _a : 0) * Number((_b = item.quantity) !== null && _b !== void 0 ? _b : 1)); }, 0).toFixed(2));
-                        discountPercentage = items.length > 0 ? (_b = items[0].discountPercentage) !== null && _b !== void 0 ? _b : 0 : 0;
+                        discountPercentage = items.length > 0 ? (_a = items[0].discountPercentage) !== null && _a !== void 0 ? _a : 0 : 0;
                         discount = parseFloat(((total * discountPercentage) / 100).toFixed(2));
                         totalAfterDiscount = parseFloat((total - discount).toFixed(2));
                         totalAfterDiscountNum = totalAfterDiscount;
                         shippingCostNum = parseFloat(Number(customerData.shipping_option.cost).toFixed(2));
                         totalAfterDiscountAndShipping = parseFloat((totalAfterDiscountNum + shippingCostNum).toFixed(2));
-                        currency = ((_c = items[0]) === null || _c === void 0 ? void 0 : _c.currency) || userPreferences.preferredCurrency || 'USD';
-                        currencySymbol = ((_d = items[0]) === null || _d === void 0 ? void 0 : _d.currencySymbol) || this.getCurrencySymbol(currency);
-                        this.logger.log("Final currency: " + currency + " (" + currencySymbol + ")");
-                        this.logger.log("Payment amount: " + totalAfterDiscount + " " + currency);
-                        return [4 /*yield*/, this.createSkipCashPayment(res.data.order_id, totalAfterDiscountAndShipping, currency, customerData)];
-                    case 7:
-                        skipCashPayment = _e.sent();
+                        return [4 /*yield*/, this.createSkipCashPayment(res.data.order_id, totalAfterDiscountAndShipping, customerData)];
+                    case 6:
+                        skipCashPayment = _b.sent();
                         order = this.orderRepository.create({
                             wcOrderId: res.data.order_id,
                             wcOrderStatus: res.data.order_status,
                             wcPaymentStatus: res.data.payment_status,
                             wcOrderKey: res.data.order_key,
-                            currency: currency,
-                            currencySymbol: currencySymbol,
                             total: totalAfterDiscount.toFixed(2),
                             shippingCost: shippingCostNum.toFixed(2),
-                            originalTotal: originalTotal.toFixed(2),
                             userId: userId,
                             items: items,
                             customerData: customerData,
@@ -341,55 +322,35 @@ var OrdersService = /** @class */ (function () {
                             skipCashPaymentUrl: skipCashPayment.resultObj.payUrl
                         });
                         return [4 /*yield*/, this.orderRepository.save(order)];
-                    case 8:
-                        _e.sent();
+                    case 7:
+                        _b.sent();
                         couponCode = items.length > 0 ? items[0].couponCode : undefined;
-                        if (!couponCode) return [3 /*break*/, 12];
-                        _e.label = 9;
-                    case 9:
-                        _e.trys.push([9, 11, , 12]);
+                        if (!couponCode) return [3 /*break*/, 11];
+                        _b.label = 8;
+                    case 8:
+                        _b.trys.push([8, 10, , 11]);
                         return [4 /*yield*/, rxjs_1.firstValueFrom(this.affiliateClient.send('affiliate.addCommission', {
                                 couponCode: couponCode,
                                 saleAmount: totalAfterDiscount
                             }).pipe(rxjs_1.timeout(5000)))];
+                    case 9:
+                        _b.sent();
+                        return [3 /*break*/, 11];
                     case 10:
-                        _e.sent();
-                        return [3 /*break*/, 12];
-                    case 11:
-                        err_2 = _e.sent();
+                        err_2 = _b.sent();
                         this.logger.warn("Failed to add affiliate commission: " + (err_2.message || err_2));
-                        return [3 /*break*/, 12];
-                    case 12: return [4 /*yield*/, this.sendNotification(userId, 'Order Created 🛒', "Your order (" + order.wcOrderId + ") total: " + totalAfterDiscount.toFixed(2) + " " + currencySymbol + " has been created successfully.")];
-                    case 13:
-                        _e.sent();
+                        return [3 /*break*/, 11];
+                    case 11: return [4 /*yield*/, this.sendNotification(userId, 'Order Created 🛒', "Your order (" + order.wcOrderId + ") total: " + totalAfterDiscount.toFixed(2) + " has been created successfully.")];
+                    case 12:
+                        _b.sent();
                         return [2 /*return*/, order];
-                    case 14:
-                        error_4 = _e.sent();
+                    case 13:
+                        error_4 = _b.sent();
                         throw toRpc(error_4, 'Failed to create order');
-                    case 15: return [2 /*return*/];
+                    case 14: return [2 /*return*/];
                 }
             });
         });
-    };
-    OrdersService.prototype.getCurrencySymbol = function (currency) {
-        var symbols = {
-            USD: '$',
-            EUR: '€',
-            GBP: '£',
-            QAR: 'ر.ق',
-            SAR: 'ر.س',
-            AED: 'د.إ',
-            EGP: 'ج.م',
-            JPY: '¥',
-            CNY: '¥',
-            TRY: '₺',
-            INR: '₹',
-            KRW: '₩',
-            BRL: 'R$',
-            CAD: 'C$',
-            AUD: 'A$'
-        };
-        return symbols[currency] || currency;
     };
     OrdersService.prototype.getOrderById = function (id) {
         return __awaiter(this, void 0, void 0, function () {

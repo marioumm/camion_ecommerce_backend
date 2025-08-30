@@ -37,12 +37,6 @@ var Order = /** @class */ (function () {
     ], Order.prototype, "shippingCost");
     __decorate([
         typeorm_1.Column({ nullable: true })
-    ], Order.prototype, "currencySymbol");
-    __decorate([
-        typeorm_1.Column({ nullable: true })
-    ], Order.prototype, "originalTotal");
-    __decorate([
-        typeorm_1.Column({ nullable: true })
     ], Order.prototype, "userId");
     __decorate([
         typeorm_1.Column({ type: 'jsonb', nullable: true, "default": function () { return "'[]'"; } })

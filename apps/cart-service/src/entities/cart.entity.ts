@@ -30,16 +30,7 @@ export class CartItem {
   image?: string;
 
   @Column({ type: 'varchar', nullable: true })
-  price?: string; 
-
-  @Column({ nullable: true, default: 'USD' })
-  currency?: string;
-
-  @Column({ nullable: true, default: '$' })
-  currencySymbol?: string;
-
-  @Column({ type: 'varchar', nullable: true })
-  originalPrice?: string; 
+  price?: string;  
 
   @Column({ nullable: true })
   couponCode?: string;

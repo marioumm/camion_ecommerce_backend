@@ -36,15 +36,6 @@ var CartItem = /** @class */ (function () {
         typeorm_1.Column({ type: 'varchar', nullable: true })
     ], CartItem.prototype, "price");
     __decorate([
-        typeorm_1.Column({ nullable: true, "default": 'USD' })
-    ], CartItem.prototype, "currency");
-    __decorate([
-        typeorm_1.Column({ nullable: true, "default": '$' })
-    ], CartItem.prototype, "currencySymbol");
-    __decorate([
-        typeorm_1.Column({ type: 'varchar', nullable: true })
-    ], CartItem.prototype, "originalPrice");
-    __decorate([
         typeorm_1.Column({ nullable: true })
     ], CartItem.prototype, "couponCode");
     __decorate([

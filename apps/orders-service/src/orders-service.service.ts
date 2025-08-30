@@ -12,8 +12,7 @@ import { ClientProxy, RpcException } from '@nestjs/microservices';
 import axios from 'axios';
 import * as crypto from 'crypto';
 import { CartItem } from 'apps/cart-service/src/entities/cart.entity';
-import { catchError, firstValueFrom, timeout, of } from 'rxjs';
-
+import { catchError, firstValueFrom, timeout } from 'rxjs';
 
 @Injectable()
 export class OrdersService {
@@ -108,7 +107,7 @@ export class OrdersService {
     }
   }
 
-  async createSkipCashPayment(orderId: string, amount: number, currency: string, customerData: any) {
+  async createSkipCashPayment(orderId: string, amount: number, customerData: any) {
     try {
       const url = `${this.SKIPCASH_BASE_URL}/api/v1/payments`;
 
@@ -116,7 +115,6 @@ export class OrdersService {
         Uid: this.generateUUID(),
         KeyId: process.env.SKIPCASH_KEY_ID,
         Amount: amount.toFixed(2),
-        Currency: currency,
         FirstName: customerData.first_name,
         LastName: customerData.last_name,
         Phone: customerData.phone,
@@ -174,18 +172,14 @@ export class OrdersService {
       .map(key => `${key}=${String(payload[key]).trim()}`)
       .join(',');
 
-
     console.log('Signature Base String:', nonEmptyFields);
-
 
     const signature = crypto
       .createHmac('sha256', process.env.SKIPCASH_KEY_SECRET || '')
       .update(nonEmptyFields)
       .digest('base64');
 
-
     return signature;
-
   }
 
   private generateUUID(): string {
@@ -220,35 +214,12 @@ export class OrdersService {
         );
       }
 
-      const userPreferences = await firstValueFrom(
-        this.usersClient.send('get_user_preferences', { userId }).pipe(
-          timeout(3000),
-          catchError(() => {
-            this.logger.warn(`User ${userId} preferences not found, using defaults`);
-            return of({
-              preferredCurrency: 'USD',
-              preferredLocale: 'en'
-            });
-          }),
-        ),
-      );
-
-      this.logger.log(`User preferences: ${JSON.stringify(userPreferences)}`);
-      this.logger.log(`Items currency: ${items[0]?.currency}`);
-
       const updatedDto = { ...dto, customer_data: customerData };
       const res = await this.createWCOrder(updatedDto, items);
 
       const total = parseFloat(
         items.reduce(
           (sum: number, item) => sum + (Number(item.price ?? 0) * Number(item.quantity ?? 1)),
-          0,
-        ).toFixed(2)
-      );
-
-      const originalTotal = parseFloat(
-        items.reduce(
-          (sum: number, item) => sum + (Number(item.originalPrice ?? 0) * Number(item.quantity ?? 1)),
           0,
         ).toFixed(2)
       );
@@ -264,16 +235,9 @@ export class OrdersService {
         (totalAfterDiscountNum + shippingCostNum).toFixed(2)
       );
 
-      const currency = items[0]?.currency || userPreferences.preferredCurrency || 'USD';
-      const currencySymbol = items[0]?.currencySymbol || this.getCurrencySymbol(currency);
-
-      this.logger.log(`Final currency: ${currency} (${currencySymbol})`);
-      this.logger.log(`Payment amount: ${totalAfterDiscount} ${currency}`);
-
       const skipCashPayment = await this.createSkipCashPayment(
         res.data.order_id,
         totalAfterDiscountAndShipping,
-        currency,
         customerData,
       );
 
@@ -282,11 +246,8 @@ export class OrdersService {
         wcOrderStatus: res.data.order_status,
         wcPaymentStatus: res.data.payment_status,
         wcOrderKey: res.data.order_key,
-        currency,
-        currencySymbol,
         total: totalAfterDiscount.toFixed(2),
         shippingCost: shippingCostNum.toFixed(2),
-        originalTotal: originalTotal.toFixed(2),
         userId,
         items,
         customerData,
@@ -299,7 +260,6 @@ export class OrdersService {
       });
 
       await this.orderRepository.save(order);
-
 
       const couponCode = items.length > 0 ? items[0].couponCode : undefined;
       if (couponCode) {
@@ -318,7 +278,7 @@ export class OrdersService {
       await this.sendNotification(
         userId,
         'Order Created 🛒',
-        `Your order (${order.wcOrderId}) total: ${totalAfterDiscount.toFixed(2)} ${currencySymbol} has been created successfully.`,
+        `Your order (${order.wcOrderId}) total: ${totalAfterDiscount.toFixed(2)} has been created successfully.`,
       );
 
       return order;
@@ -326,28 +286,6 @@ export class OrdersService {
       throw toRpc(error, 'Failed to create order');
     }
   }
-
-  private getCurrencySymbol(currency: string): string {
-    const symbols = {
-      USD: '$',
-      EUR: '€',
-      GBP: '£',
-      QAR: 'ر.ق',
-      SAR: 'ر.س',
-      AED: 'د.إ',
-      EGP: 'ج.م',
-      JPY: '¥',
-      CNY: '¥',
-      TRY: '₺',
-      INR: '₹',
-      KRW: '₩',
-      BRL: 'R$',
-      CAD: 'C$',
-      AUD: 'A$',
-    };
-    return symbols[currency] || currency;
-  }
-
 
   async getOrderById(id: string) {
     try {
@@ -386,7 +324,6 @@ export class OrdersService {
       throw toRpc(error, 'Failed to mark order as paid');
     }
   }
-
 
   async markOrderPaidByTransaction(transactionId: string, paymentData: any) {
     try {
@@ -551,7 +488,6 @@ export class OrdersService {
       throw toRpc(error, 'Failed to count cancelled orders');
     }
   }
-
 }
 
 function toRpc(error: any, fallbackMsg?: string) {

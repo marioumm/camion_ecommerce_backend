@@ -57,8 +57,6 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 };
 exports.__esModule = true;
 exports.CartServiceService = void 0;
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
@@ -217,12 +215,11 @@ var CartServiceService = /** @class */ (function () {
     };
     CartServiceService.prototype.addToCart = function (dto, userId) {
         return __awaiter(this, void 0, void 0, function () {
-            var userPreferences, product_1, convertedPrice, existing, savedItem, totalPrice, error_2;
-            var _this = this;
+            var product, existing, savedItem, totalPrice, error_2;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
-                        _a.trys.push([0, 11, , 12]);
+                        _a.trys.push([0, 9, , 10]);
                         return [4 /*yield*/, this.verifyUserExists(userId)];
                     case 1:
                         _a.sent();
@@ -230,73 +227,45 @@ var CartServiceService = /** @class */ (function () {
                             throw new common_1.BadRequestException('Missing productId');
                         if (!dto.quantity || dto.quantity <= 0)
                             throw new common_1.BadRequestException('Quantity must be greater than 0');
-                        return [4 /*yield*/, rxjs_1.firstValueFrom(this.usersClient.send('get_user_preferences', { userId: userId }).pipe(rxjs_1.timeout(3000), rxjs_1.catchError(function () { return rxjs_1.of({
-                                preferredCurrency: 'USD',
-                                preferredLocale: 'en'
-                            }); })))];
-                    case 2:
-                        userPreferences = _a.sent();
                         return [4 /*yield*/, this.fetchProductFromWoo(dto.productId)];
-                    case 3:
-                        product_1 = _a.sent();
-                        if (!product_1)
+                    case 2:
+                        product = _a.sent();
+                        if (!product)
                             throw new common_1.NotFoundException('Product not found in WooCommerce');
-                        return [4 /*yield*/, rxjs_1.firstValueFrom(this.usersClient.send('convert_single_price', {
-                                userId: userId,
-                                amount: parseFloat(product_1.price),
-                                fromCurrency: 'QAR'
-                            }).pipe(rxjs_1.timeout(5000), rxjs_1.catchError(function (err) {
-                                _this.logger.warn("Price conversion failed: " + err.message);
-                                return rxjs_1.of({
-                                    convertedAmount: parseFloat(product_1.price),
-                                    currency: 'QAR',
-                                    currencySymbol: 'ر.ق',
-                                    originalAmount: parseFloat(product_1.price),
-                                    originalCurrency: 'QAR'
-                                });
-                            })))];
-                    case 4:
-                        convertedPrice = _a.sent();
                         return [4 /*yield*/, this.cartRepository.findOne({
                                 where: { userId: userId, productId: dto.productId }
                             })];
-                    case 5:
+                    case 3:
                         existing = _a.sent();
                         savedItem = void 0;
-                        if (!existing) return [3 /*break*/, 7];
+                        if (!existing) return [3 /*break*/, 5];
                         existing.quantity += dto.quantity;
-                        existing.title = product_1.title;
-                        existing.image = product_1.image;
-                        existing.price = convertedPrice.convertedAmount.toString();
-                        existing.currency = convertedPrice.currency;
-                        existing.currencySymbol = convertedPrice.currencySymbol;
-                        existing.originalPrice = product_1.price;
+                        existing.title = product.title;
+                        existing.image = product.image;
+                        existing.price = String(product.price);
                         return [4 /*yield*/, this.cartRepository.save(existing)];
-                    case 6:
+                    case 4:
                         savedItem = _a.sent();
-                        return [3 /*break*/, 9];
-                    case 7: return [4 /*yield*/, this.cartRepository.save({
+                        return [3 /*break*/, 7];
+                    case 5: return [4 /*yield*/, this.cartRepository.save({
                             userId: userId,
-                            productId: product_1.id,
+                            productId: product.id,
                             quantity: dto.quantity,
-                            title: product_1.title,
-                            image: product_1.image,
-                            price: convertedPrice.convertedAmount.toString(),
-                            currency: convertedPrice.currency,
-                            currencySymbol: convertedPrice.currencySymbol,
-                            originalPrice: product_1.price,
+                            title: product.title,
+                            image: product.image,
+                            price: String(product.price),
                             variation: dto.variation
                         })];
-                    case 8:
+                    case 6:
                         savedItem = _a.sent();
-                        _a.label = 9;
-                    case 9:
+                        _a.label = 7;
+                    case 7:
                         totalPrice = Number(savedItem.price) * savedItem.quantity;
-                        return [4 /*yield*/, this.sendNotification(userId, 'Product added to cart successfully 🛒', product_1.title + " added for " + convertedPrice.convertedAmount + " " + convertedPrice.currencySymbol)];
-                    case 10:
+                        return [4 /*yield*/, this.sendNotification(userId, 'Product added to cart successfully 🛒', product.title + " added to cart successfully.")];
+                    case 8:
                         _a.sent();
-                        return [2 /*return*/, __assign(__assign({}, savedItem), { totalPrice: totalPrice, formattedPrice: savedItem.price + " " + savedItem.currencySymbol, formattedTotal: totalPrice.toFixed(2) + " " + savedItem.currencySymbol })];
-                    case 11:
+                        return [2 /*return*/, __assign(__assign({}, savedItem), { totalPrice: totalPrice })];
+                    case 9:
                         error_2 = _a.sent();
                         if (error_2 instanceof common_1.BadRequestException ||
                             error_2 instanceof common_1.UnauthorizedException ||
@@ -305,7 +274,7 @@ var CartServiceService = /** @class */ (function () {
                             throw error_2;
                         this.logger.error('Failed to add to cart', error_2.stack);
                         throw new common_1.InternalServerErrorException('Failed to add to cart');
-                    case 12: return [2 /*return*/];
+                    case 10: return [2 /*return*/];
                 }
             });
         });
@@ -354,40 +323,23 @@ var CartServiceService = /** @class */ (function () {
                     case 3:
                         saved = _a.sent();
                         totalPrice = Number(saved.price) * saved.quantity;
-                        return [2 /*return*/, __assign(__assign({}, saved), { totalPrice: totalPrice, formattedPrice: saved.price + " " + saved.currencySymbol, formattedTotal: totalPrice.toFixed(2) + " " + saved.currencySymbol })];
+                        return [2 /*return*/, __assign(__assign({}, saved), { totalPrice: totalPrice })];
                 }
             });
         });
     };
     CartServiceService.prototype.getCart = function (userId) {
-        var _a, _b;
         return __awaiter(this, void 0, void 0, function () {
-            var items, enhancedItems, grandTotal, currency, currencySymbol;
-            return __generator(this, function (_c) {
-                switch (_c.label) {
+            var items;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
                     case 0: return [4 /*yield*/, this.verifyUserExists(userId)];
                     case 1:
-                        _c.sent();
+                        _a.sent();
                         return [4 /*yield*/, this.cartRepository.find({ where: { userId: userId } })];
                     case 2:
-                        items = _c.sent();
-                        enhancedItems = items.map(function (item) {
-                            var itemTotal = Number(item.price || 0) * item.quantity;
-                            return __assign(__assign({}, item), { formattedPrice: item.price + " " + item.currencySymbol, formattedOriginalPrice: item.originalPrice + " \u0631.\u0642", itemTotal: itemTotal, formattedItemTotal: itemTotal.toFixed(2) + " " + item.currencySymbol });
-                        });
-                        grandTotal = enhancedItems.reduce(function (sum, item) { return sum + item.itemTotal; }, 0);
-                        currency = ((_a = items[0]) === null || _a === void 0 ? void 0 : _a.currency) || 'USD';
-                        currencySymbol = ((_b = items[0]) === null || _b === void 0 ? void 0 : _b.currencySymbol) || '$';
-                        return [2 /*return*/, {
-                                items: enhancedItems,
-                                summary: {
-                                    totalItems: items.length,
-                                    grandTotal: grandTotal,
-                                    currency: currency,
-                                    currencySymbol: currencySymbol,
-                                    formattedGrandTotal: grandTotal.toFixed(2) + " " + currencySymbol
-                                }
-                            }];
+                        items = _a.sent();
+                        return [2 /*return*/, items.map(function (item) { return (__assign(__assign({}, item), { totalPrice: Number(item.price) * item.quantity })); })];
                 }
             });
         });
@@ -445,25 +397,24 @@ var CartServiceService = /** @class */ (function () {
         });
     };
     CartServiceService.prototype.applyCouponToCart = function (userId, couponCode) {
-        var _a, _b;
         return __awaiter(this, void 0, void 0, function () {
-            var cartItems, coupon_1, total, discount, totalAfterDiscount, currency, currencySymbol, error_3;
+            var cartItems, coupon_1, total, discount, totalAfterDiscount, error_3;
             var _this = this;
-            return __generator(this, function (_c) {
-                switch (_c.label) {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
                     case 0:
-                        _c.trys.push([0, 5, , 6]);
+                        _a.trys.push([0, 5, , 6]);
                         return [4 /*yield*/, this.verifyUserExists(userId)];
                     case 1:
-                        _c.sent();
+                        _a.sent();
                         return [4 /*yield*/, this.cartRepository.find({ where: { userId: userId } })];
                     case 2:
-                        cartItems = _c.sent();
+                        cartItems = _a.sent();
                         if (!cartItems.length)
                             throw new common_1.NotFoundException('Cart is empty');
                         return [4 /*yield*/, this.fetchCoupon(couponCode)];
                     case 3:
-                        coupon_1 = _c.sent();
+                        coupon_1 = _a.sent();
                         if (!coupon_1)
                             throw new common_1.NotFoundException('Invalid coupon code');
                         return [4 /*yield*/, Promise.all(cartItems.map(function (item) { return __awaiter(_this, void 0, void 0, function () {
@@ -480,29 +431,16 @@ var CartServiceService = /** @class */ (function () {
                                 });
                             }); }))];
                     case 4:
-                        _c.sent();
+                        _a.sent();
                         total = cartItems.reduce(function (sum, i) {
                             var priceNum = i.price ? parseFloat(i.price) : 0;
                             return sum + priceNum * i.quantity;
                         }, 0);
                         discount = (total * coupon_1.discountPercentage) / 100;
                         totalAfterDiscount = total - discount;
-                        currency = ((_a = cartItems[0]) === null || _a === void 0 ? void 0 : _a.currency) || 'USD';
-                        currencySymbol = ((_b = cartItems[0]) === null || _b === void 0 ? void 0 : _b.currencySymbol) || '$';
-                        return [2 /*return*/, {
-                                cartItems: cartItems,
-                                total: total,
-                                discount: discount,
-                                totalAfterDiscount: totalAfterDiscount,
-                                coupon: coupon_1,
-                                currency: currency,
-                                currencySymbol: currencySymbol,
-                                formattedTotal: total.toFixed(2) + " " + currencySymbol,
-                                formattedDiscount: discount.toFixed(2) + " " + currencySymbol,
-                                formattedFinalTotal: totalAfterDiscount.toFixed(2) + " " + currencySymbol
-                            }];
+                        return [2 /*return*/, { cartItems: cartItems, total: total, discount: discount, totalAfterDiscount: totalAfterDiscount, coupon: coupon_1 }];
                     case 5:
-                        error_3 = _c.sent();
+                        error_3 = _a.sent();
                         if (error_3 instanceof common_1.BadRequestException ||
                             error_3 instanceof common_1.UnauthorizedException ||
                             error_3 instanceof common_1.NotFoundException ||

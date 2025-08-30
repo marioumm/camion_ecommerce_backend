@@ -18,9 +18,6 @@ var otp_service_1 = require("./otp-service");
 var auth_1 = require("@app/auth");
 var microservices_1 = require("@nestjs/microservices");
 var schedule_1 = require("@nestjs/schedule");
-var currency_entity_1 = require("./entities/currency.entity");
-var currency_service_1 = require("./currency.service");
-var currency_seeder_1 = require("./database/currency.seeder");
 var axios_1 = require("@nestjs/axios");
 var UsersServiceModule = /** @class */ (function () {
     function UsersServiceModule() {
@@ -39,7 +36,7 @@ var UsersServiceModule = /** @class */ (function () {
                     autoLoadEntities: true,
                     synchronize: true
                 }),
-                typeorm_1.TypeOrmModule.forFeature([user_entity_1.User, currency_entity_1.Currency]),
+                typeorm_1.TypeOrmModule.forFeature([user_entity_1.User]),
                 schedule_1.ScheduleModule.forRoot(),
                 jwt_1.JwtModule.register({
                     secret: process.env.JWT_SECRET,
@@ -62,7 +59,7 @@ var UsersServiceModule = /** @class */ (function () {
                 ]),
             ],
             controllers: [users_service_controller_1.UsersServiceController],
-            providers: [users_service_service_1.UsersService, otp_service_1.OTPService, currency_service_1.CurrencyService, currency_seeder_1.CurrencySeeder]
+            providers: [users_service_service_1.UsersService, otp_service_1.OTPService]
         })
     ], UsersServiceModule);
     return UsersServiceModule;

@@ -68,22 +68,6 @@ export class User {
   @Column({ default: true })
   isFirstLogin: boolean;
 
-  
-  @Column({ 
-    length: 3, 
-    name: 'preferred_currency',
-    nullable: true 
-  })
-  preferredCurrency: string;
-
-  @Column({ 
-    length: 5, 
-    name: 'preferred_locale',
-    nullable: true 
-  })
-  preferredLocale: string;
-
-
   @CreateDateColumn({ type: 'timestamp' })
   createdAt: Date;
 

@@ -18,7 +18,6 @@ var auth_1 = require("@app/auth");
 var order_controller_1 = require("./controllers/order.controller");
 var health_controller_1 = require("./controllers/health.controller");
 var webhook_controller_1 = require("./controllers/webhook.controller");
-var currency_controller_1 = require("./controllers/currency.controller");
 var settings_controller_1 = require("./controllers/settings.controller");
 var AppModule = /** @class */ (function () {
     function AppModule() {
@@ -118,7 +117,6 @@ var AppModule = /** @class */ (function () {
                 affiliate_controller_1.AffiliateController,
                 wishlist_controller_1.WishlistController,
                 webhook_controller_1.WebhookController,
-                currency_controller_1.CurrencyController,
                 settings_controller_1.SettingsController,
                 health_controller_1.HealthController
             ]

@@ -9,9 +9,6 @@ import { OTPService } from './otp-service';
 import { AuthModule } from '@app/auth';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { ScheduleModule } from '@nestjs/schedule';
-import { Currency } from './entities/currency.entity';
-import { CurrencyService } from './currency.service';
-import { CurrencySeeder } from './database/currency.seeder'; 
 import { HttpModule } from '@nestjs/axios';
 
 
@@ -28,7 +25,7 @@ import { HttpModule } from '@nestjs/axios';
       autoLoadEntities: true,
       synchronize: true,
     }),
-    TypeOrmModule.forFeature([User , Currency]),
+    TypeOrmModule.forFeature([User]),
     ScheduleModule.forRoot(),
     JwtModule.register({
       secret: process.env.JWT_SECRET,
@@ -51,6 +48,6 @@ import { HttpModule } from '@nestjs/axios';
     ]),
   ],
   controllers: [UsersServiceController ],
-  providers: [UsersService, OTPService , CurrencyService , CurrencySeeder],
+  providers: [UsersService, OTPService ],
 })
 export class UsersServiceModule { }

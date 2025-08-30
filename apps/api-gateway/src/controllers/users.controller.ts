@@ -23,6 +23,7 @@ import { VerifyDto } from 'apps/users-service/src/dto/verifyOTP.dto';
 import { UserRole } from 'apps/users-service/src/entities/user.entity';
 import { JwtAuthGuard } from 'libs/auth/src';
 import { CurrentUserId } from 'libs/auth/src/current-user.decorator';
+import { OwnerOrAdmin } from 'libs/auth/src/owner-or-admin.decorator';
 import { Roles } from 'libs/auth/src/roles.decorator';
 import { RolesGuard } from 'libs/auth/src/roles.guard';
 import { firstValueFrom } from 'rxjs';
@@ -90,6 +91,7 @@ export class UserController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
+  @OwnerOrAdmin()
   @Delete(':id')
   deleteUser(@Param('id') id: string) {
     return this.usersClient.send({ cmd: 'delete_user' }, id);

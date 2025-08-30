@@ -9,7 +9,6 @@ import { AuthModule } from "@app/auth";
 import { OrdersController } from "./controllers/order.controller";
 import { HealthController } from "./controllers/health.controller";
 import { WebhookController } from "./controllers/webhook.controller";
-import { CurrencyController } from "./controllers/currency.controller";
 import { SettingsController } from "./controllers/settings.controller";
 
 @Module({
@@ -107,7 +106,6 @@ import { SettingsController } from "./controllers/settings.controller";
     AffiliateController,
     WishlistController,
     WebhookController,
-    CurrencyController,
     SettingsController,
     HealthController
   ],
