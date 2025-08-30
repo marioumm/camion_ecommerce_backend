@@ -124,21 +124,6 @@ var UserController = /** @class */ (function () {
             });
         });
     };
-    UserController.prototype.updateUserCurrency = function (id, _a) {
-        var currency = _a.currency;
-        return __awaiter(this, void 0, void 0, function () {
-            return __generator(this, function (_b) {
-                return [2 /*return*/, this.usersClient.send({ cmd: 'update_user_currency' }, { userId: id, currency: currency.toUpperCase() })];
-            });
-        });
-    };
-    UserController.prototype.getUserPreferences = function (id) {
-        return __awaiter(this, void 0, void 0, function () {
-            return __generator(this, function (_a) {
-                return [2 /*return*/, this.usersClient.send({ cmd: 'get_user_preferences' }, { userId: id })];
-            });
-        });
-    };
     UserController.prototype.countAllUsers = function () {
         return this.usersClient.send({ cmd: 'count_all_users' }, {});
     };
@@ -216,17 +201,6 @@ var UserController = /** @class */ (function () {
         __param(0, common_1.Body()),
         __param(1, current_user_decorator_1.CurrentUserId())
     ], UserController.prototype, "updateUserAddress");
-    __decorate([
-        common_1.UseGuards(src_1.JwtAuthGuard),
-        common_1.Patch(':id/currency'),
-        __param(0, common_1.Param('id')),
-        __param(1, common_1.Body())
-    ], UserController.prototype, "updateUserCurrency");
-    __decorate([
-        common_1.UseGuards(src_1.JwtAuthGuard),
-        common_1.Get(':id/preferences'),
-        __param(0, common_1.Param('id'))
-    ], UserController.prototype, "getUserPreferences");
     __decorate([
         common_1.Get('/count/all'),
         common_1.UseGuards(src_1.JwtAuthGuard, roles_guard_1.RolesGuard),

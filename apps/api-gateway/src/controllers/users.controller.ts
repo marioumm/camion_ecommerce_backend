@@ -142,26 +142,6 @@ export class UserController {
     );
   }
 
-  @UseGuards(JwtAuthGuard)
-  @Patch(':id/currency')
-  async updateUserCurrency(
-    @Param('id') id: string,
-    @Body() { currency }: { currency: string }
-  ) {
-    return this.usersClient.send(
-      { cmd: 'update_user_currency' },
-      { userId: id, currency: currency.toUpperCase() }
-    );
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Get(':id/preferences')
-  async getUserPreferences(@Param('id') id: string) {
-    return this.usersClient.send(
-      { cmd: 'get_user_preferences' },
-      { userId: id }
-    );
-  }
 
   @Get('/count/all')
   @UseGuards(JwtAuthGuard, RolesGuard)

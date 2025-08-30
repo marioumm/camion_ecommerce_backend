@@ -113,20 +113,21 @@ services:
       - postgres_db
 
   settings-service:
-      build:
-        context: .
-        dockerfile: Dockerfile
-      command: node dist/apps/settings-service/main
-      container_name: settings-service
-      env_file:
-        - .env
-      ports:
-        - "${SETTINGS_TCP_PORT}:${SETTINGS_TCP_PORT}"
-      networks:
-        - backend
-      depends_on:
-        - postgres_db
-
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: node dist/apps/settings-service/main
+    container_name: settings-service
+    env_file:
+      - .env
+    ports:
+      - "${SETTINGS_TCP_PORT}:${SETTINGS_TCP_PORT}"
+    volumes:
+      - uploads_data:/app/uploads
+    networks:
+      - backend
+    depends_on:
+      - postgres_db
 
   api-gateway:
     build:
@@ -139,12 +140,15 @@ services:
     ports:
       - "${API_GATEWAY_HTTP_PORT}:${API_GATEWAY_HTTP_PORT}"
       - "${API_GATEWAY_TCP_PORT}:${API_GATEWAY_TCP_PORT}"
+    volumes:
+      - uploads_data:/app/uploads
     networks:
       - backend
 
 volumes:
   pgdata:
   redis-data:
+  uploads_data: 
 
 networks:
   backend:
