@@ -46,7 +46,6 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 };
 exports.__esModule = true;
 exports.SettingsController = void 0;
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
@@ -86,7 +85,7 @@ var SettingsController = /** @class */ (function () {
                                     error: 'Maximum file size is 2MB'
                                 }];
                         }
-                        console.log('File received:', {
+                        console.log('File received for S3 upload:', {
                             originalname: file.originalname,
                             mimetype: file.mimetype,
                             size: file.size,
@@ -96,8 +95,6 @@ var SettingsController = /** @class */ (function () {
                     case 1:
                         _a.trys.push([1, 3, , 4]);
                         bufferArray = Array.from(file.buffer);
-                        console.log('Buffer array length:', bufferArray.length);
-                        console.log('First few bytes:', bufferArray.slice(0, 10));
                         return [4 /*yield*/, rxjs_1.firstValueFrom(this.settingsClient.send({ cmd: 'upload_logo' }, {
                                 buffer: bufferArray,
                                 originalname: file.originalname,
@@ -108,10 +105,10 @@ var SettingsController = /** @class */ (function () {
                         return [2 /*return*/, result];
                     case 3:
                         error_1 = _a.sent();
-                        console.error('Upload error:', error_1);
+                        console.error('S3 Upload error:', error_1);
                         return [2 /*return*/, {
                                 success: false,
-                                message: 'Upload failed',
+                                message: 'S3 upload failed',
                                 error: error_1.message
                             }];
                     case 4: return [2 /*return*/];
@@ -132,11 +129,35 @@ var SettingsController = /** @class */ (function () {
                         return [2 /*return*/, result];
                     case 2:
                         error_2 = _a.sent();
-                        console.error('Get logo error:', error_2);
+                        console.error('Get S3 logo error:', error_2);
                         return [2 /*return*/, {
                                 success: false,
-                                message: 'Failed to get logo',
+                                message: 'Failed to get logo from S3',
                                 error: error_2.message
+                            }];
+                    case 3: return [2 /*return*/];
+                }
+            });
+        });
+    };
+    SettingsController.prototype.deleteLogo = function (body) {
+        return __awaiter(this, void 0, void 0, function () {
+            var result, error_3;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        _a.trys.push([0, 2, , 3]);
+                        return [4 /*yield*/, rxjs_1.firstValueFrom(this.settingsClient.send({ cmd: 'delete_logo' }, body))];
+                    case 1:
+                        result = _a.sent();
+                        return [2 /*return*/, result];
+                    case 2:
+                        error_3 = _a.sent();
+                        console.error('Delete S3 logo error:', error_3);
+                        return [2 /*return*/, {
+                                success: false,
+                                message: 'Failed to delete logo from S3',
+                                error: error_3.message
                             }];
                     case 3: return [2 /*return*/];
                 }
@@ -151,6 +172,10 @@ var SettingsController = /** @class */ (function () {
     __decorate([
         common_1.Get('logo')
     ], SettingsController.prototype, "getCurrentLogo");
+    __decorate([
+        common_1.Delete('logo'),
+        __param(0, common_1.Body())
+    ], SettingsController.prototype, "deleteLogo");
     SettingsController = __decorate([
         common_1.Controller('admin/settings'),
         __param(0, common_1.Inject('SETTINGS_SERVICE'))

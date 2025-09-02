@@ -42,95 +42,86 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 exports.__esModule = true;
-exports.SettingsServiceController = void 0;
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
+exports.S3Service = void 0;
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-// settings-service/src/settings-service.controller.ts
 var common_1 = require("@nestjs/common");
-var microservices_1 = require("@nestjs/microservices");
-var SettingsServiceController = /** @class */ (function () {
-    function SettingsServiceController(settingsService) {
-        this.settingsService = settingsService;
+var client_s3_1 = require("@aws-sdk/client-s3");
+var S3Service = /** @class */ (function () {
+    function S3Service(configService) {
+        this.configService = configService;
+        this.logger = new common_1.Logger(S3Service_1.name);
+        this.s3Client = new client_s3_1.S3Client({
+            region: this.configService.get('AWS_REGION'),
+            credentials: {
+                accessKeyId: this.configService.get('AWS_ACCESS_KEY_ID'),
+                secretAccessKey: this.configService.get('AWS_SECRET_ACCESS_KEY')
+            }
+        });
+        this.bucketName = this.configService.get('AWS_S3_BUCKET_NAME');
     }
-    SettingsServiceController.prototype.uploadLogo = function (data) {
-        return __awaiter(this, void 0, void 0, function () {
-            var buffer, arrayValues, error_1;
+    S3Service_1 = S3Service;
+    S3Service.prototype.uploadFile = function (key, buffer, contentType) {
+        return __awaiter(this, void 0, Promise, function () {
+            var command, fileUrl, error_1;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
                         _a.trys.push([0, 2, , 3]);
-                        console.log('Received data type:', typeof data);
-                        console.log('Data keys:', Object.keys(data));
-                        console.log('Buffer type:', typeof data.buffer);
-                        buffer = void 0;
-                        if (data.buffer && typeof data.buffer === 'object') {
-                            if (data.buffer.data && Array.isArray(data.buffer.data)) {
-                                buffer = Buffer.from(data.buffer.data);
-                            }
-                            else if (Array.isArray(data.buffer)) {
-                                buffer = Buffer.from(data.buffer);
-                            }
-                            else {
-                                arrayValues = Object.values(data.buffer);
-                                buffer = Buffer.from(arrayValues);
-                            }
-                        }
-                        else {
-                            throw new Error('Invalid buffer format received');
-                        }
-                        console.log('Buffer created successfully, size:', buffer.length);
-                        return [4 /*yield*/, this.settingsService.saveLogo({
-                                buffer: buffer,
-                                originalname: data.originalname,
-                                mimetype: data.mimetype
-                            })];
-                    case 1: return [2 /*return*/, _a.sent()];
+                        command = new client_s3_1.PutObjectCommand({
+                            Bucket: this.bucketName,
+                            Key: key,
+                            Body: buffer,
+                            ContentType: contentType
+                        });
+                        return [4 /*yield*/, this.s3Client.send(command)];
+                    case 1:
+                        _a.sent();
+                        fileUrl = "https://" + this.bucketName + ".s3." + this.configService.get('AWS_REGION') + ".amazonaws.com/" + key;
+                        this.logger.log("File uploaded successfully: " + fileUrl);
+                        return [2 /*return*/, fileUrl];
                     case 2:
                         error_1 = _a.sent();
-                        console.error('Upload error in controller:', error_1);
-                        return [2 /*return*/, {
-                                success: false,
-                                message: 'Failed to process upload',
-                                error: error_1.message
-                            }];
+                        this.logger.error('Error uploading file to S3:', error_1);
+                        throw error_1;
                     case 3: return [2 /*return*/];
                 }
             });
         });
     };
-    SettingsServiceController.prototype.getLogoPath = function () {
-        return __awaiter(this, void 0, void 0, function () {
+    S3Service.prototype.deleteFile = function (key) {
+        return __awaiter(this, void 0, Promise, function () {
+            var command, error_2;
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4 /*yield*/, this.settingsService.getLogoPath()];
-                    case 1: return [2 /*return*/, _a.sent()];
+                    case 0:
+                        _a.trys.push([0, 2, , 3]);
+                        command = new client_s3_1.DeleteObjectCommand({
+                            Bucket: this.bucketName,
+                            Key: key
+                        });
+                        return [4 /*yield*/, this.s3Client.send(command)];
+                    case 1:
+                        _a.sent();
+                        this.logger.log("File deleted successfully: " + key);
+                        return [3 /*break*/, 3];
+                    case 2:
+                        error_2 = _a.sent();
+                        this.logger.error('Error deleting file from S3:', error_2);
+                        throw error_2;
+                    case 3: return [2 /*return*/];
                 }
             });
         });
     };
-    SettingsServiceController.prototype.deleteLogo = function (data) {
-        return __awaiter(this, void 0, void 0, function () {
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0: return [4 /*yield*/, this.settingsService.deleteLogo(data.s3Key)];
-                    case 1: return [2 /*return*/, _a.sent()];
-                }
-            });
-        });
+    S3Service.prototype.getFileUrl = function (key) {
+        return "https://" + this.bucketName + ".s3." + this.configService.get('AWS_REGION') + ".amazonaws.com/" + key;
     };
-    __decorate([
-        microservices_1.MessagePattern({ cmd: 'upload_logo' })
-    ], SettingsServiceController.prototype, "uploadLogo");
-    __decorate([
-        microservices_1.MessagePattern({ cmd: 'get_logo_path' })
-    ], SettingsServiceController.prototype, "getLogoPath");
-    __decorate([
-        microservices_1.MessagePattern({ cmd: 'delete_logo' })
-    ], SettingsServiceController.prototype, "deleteLogo");
-    SettingsServiceController = __decorate([
-        common_1.Controller()
-    ], SettingsServiceController);
-    return SettingsServiceController;
-}());
-exports.SettingsServiceController = SettingsServiceController;
+    var S3Service_1;
+    S3Service = S3Service_1 = __decorate([
+        common_1.Injectable()
+    ], S3Service);
+    return S3Service;
+}()); // `https://${this.bucketName}.s3.${this.configService.get('AWS_REGION')}.amazonaws.com/${key}`
+exports.S3Service = S3Service;

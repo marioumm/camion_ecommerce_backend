@@ -47,88 +47,112 @@ exports.SettingsServiceService = void 0;
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 // settings-service/src/settings-service.service.ts
 var common_1 = require("@nestjs/common");
-var fs_1 = require("fs");
 var path = require("path");
 var SettingsServiceService = /** @class */ (function () {
-    function SettingsServiceService() {
+    function SettingsServiceService(s3Service) {
+        this.s3Service = s3Service;
+        this.logger = new common_1.Logger(SettingsServiceService_1.name);
+        this.currentLogoKey = null;
     }
+    SettingsServiceService_1 = SettingsServiceService;
     SettingsServiceService.prototype.saveLogo = function (data) {
         return __awaiter(this, void 0, void 0, function () {
-            var uploadsDir, _a, ext, filename, filepath, error_1;
-            return __generator(this, function (_b) {
-                switch (_b.label) {
+            var ext, timestamp, fileName, s3Key, fileUrl, error_1;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
                     case 0:
-                        _b.trys.push([0, 7, , 8]);
-                        uploadsDir = path.join(process.cwd(), 'uploads', 'logos');
-                        _b.label = 1;
-                    case 1:
-                        _b.trys.push([1, 3, , 5]);
-                        return [4 /*yield*/, fs_1.promises.access(uploadsDir)];
-                    case 2:
-                        _b.sent();
-                        return [3 /*break*/, 5];
-                    case 3:
-                        _a = _b.sent();
-                        return [4 /*yield*/, fs_1.promises.mkdir(uploadsDir, { recursive: true })];
-                    case 4:
-                        _b.sent();
-                        return [3 /*break*/, 5];
-                    case 5:
+                        _a.trys.push([0, 2, , 3]);
                         ext = path.extname(data.originalname);
-                        filename = "logo" + ext;
-                        filepath = path.join(uploadsDir, filename);
-                        return [4 /*yield*/, fs_1.promises.writeFile(filepath, data.buffer)];
-                    case 6:
-                        _b.sent();
+                        timestamp = Date.now();
+                        fileName = "logo-" + timestamp + ext;
+                        s3Key = "logos/" + fileName;
+                        this.logger.log("Uploading logo to S3: " + s3Key);
+                        return [4 /*yield*/, this.s3Service.uploadFile(s3Key, data.buffer, data.mimetype)];
+                    case 1:
+                        fileUrl = _a.sent();
+                        this.currentLogoKey = s3Key;
+                        this.logger.log("Logo uploaded successfully to S3: " + fileUrl);
                         return [2 /*return*/, {
                                 success: true,
-                                message: 'Logo uploaded successfully! ✅',
-                                filename: filename,
-                                path: "/uploads/logos/" + filename,
-                                size: data.buffer.length
+                                message: 'Logo uploaded successfully to S3! ✅',
+                                filename: fileName,
+                                path: fileUrl,
+                                s3Key: s3Key,
+                                size: data.buffer.length,
+                                bucket: process.env.AWS_S3_BUCKET_NAME
                             }];
-                    case 7:
-                        error_1 = _b.sent();
-                        console.error('Error in saveLogo:', error_1);
+                    case 2:
+                        error_1 = _a.sent();
+                        this.logger.error('Error in saveLogo:', error_1);
                         return [2 /*return*/, {
                                 success: false,
-                                message: 'Failed to upload logo',
+                                message: 'Failed to upload logo to S3',
                                 error: error_1.message
                             }];
-                    case 8: return [2 /*return*/];
+                    case 3: return [2 /*return*/];
                 }
             });
         });
     };
     SettingsServiceService.prototype.getLogoPath = function () {
+        try {
+            if (this.currentLogoKey) {
+                var logoUrl = this.s3Service.getFileUrl(this.currentLogoKey);
+                this.logger.log("Returning current logo: " + logoUrl);
+                return {
+                    path: logoUrl,
+                    source: 's3',
+                    key: this.currentLogoKey
+                };
+            }
+            this.logger.warn('No logo has been uploaded yet');
+            return {
+                path: '/assets/default-logo.png',
+                source: 'local',
+                message: 'No logo uploaded yet - please upload a logo first!'
+            };
+        }
+        catch (error) {
+            this.logger.error('Error getting logo path:', error);
+            return {
+                path: '/assets/default-logo.png',
+                source: 'local',
+                error: error.message
+            };
+        }
+    };
+    SettingsServiceService.prototype.deleteLogo = function (s3Key) {
         return __awaiter(this, void 0, void 0, function () {
-            var logoDir, _a, files, logoFile;
-            return __generator(this, function (_b) {
-                switch (_b.label) {
+            var error_2;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
                     case 0:
-                        logoDir = path.join(process.cwd(), 'uploads', 'logos');
-                        _b.label = 1;
+                        _a.trys.push([0, 2, , 3]);
+                        return [4 /*yield*/, this.s3Service.deleteFile(s3Key)];
                     case 1:
-                        _b.trys.push([1, 3, , 4]);
-                        return [4 /*yield*/, fs_1.promises.access(logoDir)];
+                        _a.sent();
+                        if (this.currentLogoKey === s3Key) {
+                            this.currentLogoKey = null;
+                        }
+                        return [2 /*return*/, {
+                                success: true,
+                                message: 'Logo deleted successfully from S3! 🗑️'
+                            }];
                     case 2:
-                        _b.sent();
-                        return [3 /*break*/, 4];
-                    case 3:
-                        _a = _b.sent();
-                        return [2 /*return*/, { path: '/assets/default-logo.png' }];
-                    case 4: return [4 /*yield*/, fs_1.promises.readdir(logoDir)];
-                    case 5:
-                        files = _b.sent();
-                        logoFile = files.find(function (file) { return file.startsWith('logo.'); });
-                        return [2 /*return*/, logoFile
-                                ? { path: "/uploads/logos/" + logoFile }
-                                : { path: '/assets/default-logo.png' }];
+                        error_2 = _a.sent();
+                        this.logger.error('Error deleting logo:', error_2);
+                        return [2 /*return*/, {
+                                success: false,
+                                message: 'Failed to delete logo from S3',
+                                error: error_2.message
+                            }];
+                    case 3: return [2 /*return*/];
                 }
             });
         });
     };
-    SettingsServiceService = __decorate([
+    var SettingsServiceService_1;
+    SettingsServiceService = SettingsServiceService_1 = __decorate([
         common_1.Injectable()
     ], SettingsServiceService);
     return SettingsServiceService;

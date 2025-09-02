@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 // settings-service/src/settings-service.controller.ts
@@ -15,7 +16,6 @@ export class SettingsServiceController {
       console.log('Received data type:', typeof data);
       console.log('Data keys:', Object.keys(data));
       console.log('Buffer type:', typeof data.buffer);
-      console.log('Buffer constructor:', data.buffer?.constructor?.name);
       
       let buffer: Buffer;
       
@@ -53,5 +53,10 @@ export class SettingsServiceController {
   @MessagePattern({ cmd: 'get_logo_path' })
   async getLogoPath() {
     return await this.settingsService.getLogoPath();
+  }
+
+  @MessagePattern({ cmd: 'delete_logo' })
+  async deleteLogo(data: { s3Key: string }) {
+    return await this.settingsService.deleteLogo(data.s3Key);
   }
 }

@@ -36,13 +36,11 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 exports.__esModule = true;
-/* eslint-disable @typescript-eslint/no-unsafe-call */
 var core_1 = require("@nestjs/core");
 var app_module_1 = require("./app.module");
 var dotenv = require("dotenv");
 var microservices_1 = require("@nestjs/microservices");
 var common_1 = require("@nestjs/common");
-var path_1 = require("path");
 // import { JwtAuthGuard } from '@app/auth';
 var helmet_1 = require("helmet");
 var bodyParser = require("body-parser");
@@ -62,9 +60,6 @@ function bootstrap() {
                         credentials: true
                     });
                     app.use(helmet_1["default"]());
-                    app.useStaticAssets(path_1.join(process.cwd(), 'uploads'), {
-                        prefix: '/uploads/'
-                    });
                     app.useGlobalPipes(new common_1.ValidationPipe({
                         whitelist: true,
                         forbidNonWhitelisted: true,
