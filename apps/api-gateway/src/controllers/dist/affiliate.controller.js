@@ -86,6 +86,12 @@ var AffiliateController = /** @class */ (function () {
     AffiliateController.prototype.countAllCoupons = function () {
         return this.affiliateClient.send({ cmd: 'count_all_coupons' }, {});
     };
+    AffiliateController.prototype.adminCreateCoupon = function (dto) {
+        return this.affiliateClient.send({ cmd: 'admin_create_coupon' }, dto);
+    };
+    AffiliateController.prototype.updateCouponCommission = function (dto) {
+        return this.affiliateClient.send({ cmd: 'update_coupon_commission' }, dto);
+    };
     __decorate([
         common_1.UseGuards(src_1.JwtAuthGuard, roles_guard_1.RolesGuard),
         roles_decorator_1.Roles(user_entity_1.UserRole.USER),
@@ -112,7 +118,7 @@ var AffiliateController = /** @class */ (function () {
     ], AffiliateController.prototype, "reviewRequest");
     __decorate([
         common_1.UseGuards(src_1.JwtAuthGuard, roles_guard_1.RolesGuard),
-        roles_decorator_1.Roles(user_entity_1.UserRole.ADMIN, user_entity_1.UserRole.AFFILIATE),
+        roles_decorator_1.Roles(user_entity_1.UserRole.AFFILIATE),
         common_1.Post('coupon'),
         __param(0, common_1.Body()),
         __param(1, current_affiliate_id_decorator_1.CurrentAffiliateId())
@@ -189,6 +195,18 @@ var AffiliateController = /** @class */ (function () {
         common_1.UseGuards(src_1.JwtAuthGuard, roles_guard_1.RolesGuard),
         roles_decorator_1.Roles(user_entity_1.UserRole.ADMIN)
     ], AffiliateController.prototype, "countAllCoupons");
+    __decorate([
+        common_1.UseGuards(src_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+        roles_decorator_1.Roles(user_entity_1.UserRole.ADMIN),
+        common_1.Post('admin/coupon'),
+        __param(0, common_1.Body())
+    ], AffiliateController.prototype, "adminCreateCoupon");
+    __decorate([
+        common_1.UseGuards(src_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+        roles_decorator_1.Roles(user_entity_1.UserRole.ADMIN),
+        common_1.Patch('coupon/commission'),
+        __param(0, common_1.Body())
+    ], AffiliateController.prototype, "updateCouponCommission");
     AffiliateController = __decorate([
         common_1.Controller('affiliates'),
         __param(0, common_1.Inject('AFFILIATE_SERVICE'))

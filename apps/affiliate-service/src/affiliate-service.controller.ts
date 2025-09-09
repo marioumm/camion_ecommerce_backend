@@ -11,6 +11,8 @@ import { ReviewAffiliateRequestDto } from './dto/review-affiliate-request.dto ';
 import { CreateCouponDto } from './dto/create-coupon.dto';
 import { UpdateAffiliateDto } from './dto/update-affiliate.dto';
 import { SearchCouponsDto } from './dto/search-coupons.dto';
+import { AdminCreateCouponDto } from './dto/admin-create-coupon.dto';
+import { UpdateCouponCommissionDto } from './dto/update-coupon-commission.dto';
 
 function mapException(error: any) {
   if (
@@ -202,5 +204,24 @@ export class AffiliateServiceController {
   async countAllCoupons() {
     return await this.affiliateService.countAllCoupons();
   }
+
+  @MessagePattern({ cmd: 'admin_create_coupon' })
+  async handleAdminCreateCoupon(@Payload() dto: AdminCreateCouponDto) {
+    try {
+      return await this.affiliateService.adminCreateCoupon(dto);
+    } catch (error) {
+      throw mapException(error);
+    }
+  }
+
+  @MessagePattern({ cmd: 'update_coupon_commission' })
+async handleUpdateCouponCommission(@Payload() dto: UpdateCouponCommissionDto) {
+  try {
+    return await this.affiliateService.updateCouponCommission(dto);
+  } catch (error) {
+    throw mapException(error);
+  }
+}
+
 
 }

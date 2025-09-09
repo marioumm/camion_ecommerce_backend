@@ -437,7 +437,7 @@ var AffiliateServiceService = /** @class */ (function () {
     };
     AffiliateServiceService.prototype.addAffiliateCommission = function (couponCode, saleAmount) {
         return __awaiter(this, void 0, void 0, function () {
-            var coupon, affiliate, commission, transaction;
+            var coupon, affiliate, commissionRate, commission, transaction;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0: return [4 /*yield*/, this.couponRepository.findOne({
@@ -450,7 +450,8 @@ var AffiliateServiceService = /** @class */ (function () {
                             throw new microservices_1.RpcException({ statusCode: 404, message: 'Coupon or affiliate not found' });
                         }
                         affiliate = coupon.affiliate;
-                        commission = saleAmount * 0.2;
+                        commissionRate = coupon.commissionPercentage || 5.0;
+                        commission = saleAmount * (commissionRate / 100);
                         affiliate.walletBalance += commission;
                         affiliate.totalEarnings += commission;
                         return [4 /*yield*/, this.affiliateRepository.save(affiliate)];
@@ -459,12 +460,12 @@ var AffiliateServiceService = /** @class */ (function () {
                         transaction = this.affiliateTransactionRepository.create({
                             affiliate: affiliate,
                             amount: commission,
-                            description: "Commission from coupon " + couponCode + " on sale " + saleAmount
+                            description: "Commission (" + commissionRate + "%) from coupon " + couponCode + " on sale " + saleAmount
                         });
                         return [4 /*yield*/, this.affiliateTransactionRepository.save(transaction)];
                     case 3:
                         _a.sent();
-                        return [4 /*yield*/, this.sendNotification(affiliate.userId, 'New Commission Added', "You earned a commission of " + commission.toFixed(2) + " from a sale using your coupon " + couponCode + ".")];
+                        return [4 /*yield*/, this.sendNotification(affiliate.userId, 'New Commission Added', "You earned " + commission.toFixed(2) + " (" + commissionRate + "%) from coupon " + couponCode + ".")];
                     case 4:
                         _a.sent();
                         return [2 /*return*/, { commission: commission, walletBalance: affiliate.walletBalance }];
@@ -652,6 +653,81 @@ var AffiliateServiceService = /** @class */ (function () {
                         error_16 = _a.sent();
                         throw new microservices_1.RpcException({ statusCode: 500, message: (error_16 === null || error_16 === void 0 ? void 0 : error_16.message) || 'Failed to count coupons' });
                     case 3: return [2 /*return*/];
+                }
+            });
+        });
+    };
+    AffiliateServiceService.prototype.adminCreateCoupon = function (dto) {
+        return __awaiter(this, void 0, void 0, function () {
+            var affiliate, existing, coupon, error_17;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        _a.trys.push([0, 5, , 6]);
+                        return [4 /*yield*/, this.affiliateRepository.findOne({
+                                where: { id: dto.affiliateId, status: affiliate_entity_1.AffiliateStatus.APPROVED }
+                            })];
+                    case 1:
+                        affiliate = _a.sent();
+                        if (!affiliate) {
+                            throw new microservices_1.RpcException({ statusCode: 404, message: 'Affiliate not found or not approved' });
+                        }
+                        return [4 /*yield*/, this.couponRepository.findOne({ where: { code: dto.code } })];
+                    case 2:
+                        existing = _a.sent();
+                        if (existing)
+                            throw new microservices_1.RpcException({ statusCode: 409, message: 'Coupon code already exists' });
+                        coupon = this.couponRepository.create({
+                            code: dto.code,
+                            discountPercentage: dto.discountPercentage,
+                            commissionPercentage: dto.commissionPercentage,
+                            affiliate: affiliate
+                        });
+                        affiliate.couponsCreated += 1;
+                        return [4 /*yield*/, this.affiliateRepository.save(affiliate)];
+                    case 3:
+                        _a.sent();
+                        return [4 /*yield*/, this.sendNotification(affiliate.userId, 'New Coupon Created', "Admin created coupon " + dto.code + " for you with " + dto.commissionPercentage + "% commission rate.")];
+                    case 4:
+                        _a.sent();
+                        return [2 /*return*/, this.couponRepository.save(coupon)];
+                    case 5:
+                        error_17 = _a.sent();
+                        throw new microservices_1.RpcException({ statusCode: 500, message: (error_17 === null || error_17 === void 0 ? void 0 : error_17.message) || 'Failed to create coupon by admin' });
+                    case 6: return [2 /*return*/];
+                }
+            });
+        });
+    };
+    AffiliateServiceService.prototype.updateCouponCommission = function (dto) {
+        return __awaiter(this, void 0, void 0, function () {
+            var coupon, oldRate, updatedCoupon, error_18;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        _a.trys.push([0, 4, , 5]);
+                        return [4 /*yield*/, this.couponRepository.findOne({
+                                where: { id: dto.couponId },
+                                relations: ['affiliate']
+                            })];
+                    case 1:
+                        coupon = _a.sent();
+                        if (!coupon) {
+                            throw new microservices_1.RpcException({ statusCode: 404, message: 'Coupon not found' });
+                        }
+                        oldRate = coupon.commissionPercentage || 5.0;
+                        coupon.commissionPercentage = dto.commissionPercentage;
+                        return [4 /*yield*/, this.couponRepository.save(coupon)];
+                    case 2:
+                        updatedCoupon = _a.sent();
+                        return [4 /*yield*/, this.sendNotification(coupon.affiliate.userId, 'Commission Rate Updated', "Commission rate for coupon " + coupon.code + " updated from " + oldRate + "% to " + dto.commissionPercentage + "%.")];
+                    case 3:
+                        _a.sent();
+                        return [2 /*return*/, updatedCoupon];
+                    case 4:
+                        error_18 = _a.sent();
+                        throw new microservices_1.RpcException({ statusCode: 500, message: (error_18 === null || error_18 === void 0 ? void 0 : error_18.message) || 'Failed to update coupon commission' });
+                    case 5: return [2 /*return*/];
                 }
             });
         });

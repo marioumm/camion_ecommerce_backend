@@ -12,6 +12,8 @@ import { Roles } from 'libs/auth/src/roles.decorator';
 import { RolesGuard } from 'libs/auth/src/roles.guard';
 import { CurrentAffiliateId } from 'libs/auth/src/current-affiliate-id.decorator';
 import { CurrentUserId } from 'libs/auth/src/current-user.decorator';
+import { AdminCreateCouponDto } from 'apps/affiliate-service/src/dto/admin-create-coupon.dto';
+import { UpdateCouponCommissionDto } from 'apps/affiliate-service/src/dto/update-coupon-commission.dto';
 
 @Controller('affiliates')
 export class AffiliateController {
@@ -55,7 +57,7 @@ export class AffiliateController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.ADMIN, UserRole.AFFILIATE)
+  @Roles(UserRole.AFFILIATE)
   @Post('coupon')
   createCoupon(
     @Body() dto: CreateCouponDto,
@@ -154,5 +156,20 @@ export class AffiliateController {
   countAllCoupons() {
     return this.affiliateClient.send({ cmd: 'count_all_coupons' }, {});
   }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @Post('admin/coupon')
+  adminCreateCoupon(@Body() dto: AdminCreateCouponDto) {
+    return this.affiliateClient.send({ cmd: 'admin_create_coupon' }, dto);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @Patch('coupon/commission')
+  updateCouponCommission(@Body() dto: UpdateCouponCommissionDto) {
+    return this.affiliateClient.send({ cmd: 'update_coupon_commission' }, dto);
+  }
+
 
 }

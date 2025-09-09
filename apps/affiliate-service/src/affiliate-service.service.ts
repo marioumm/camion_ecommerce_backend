@@ -19,6 +19,8 @@ import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { UserRole } from 'apps/users-service/src/entities/user.entity';
 import { catchError, firstValueFrom, timeout } from 'rxjs';
 import { AffiliateTransaction } from './entities/affiliate_transactions.entity';
+import { AdminCreateCouponDto } from './dto/admin-create-coupon.dto';
+import { UpdateCouponCommissionDto } from './dto/update-coupon-commission.dto';
 
 @Injectable()
 export class AffiliateServiceService {
@@ -329,7 +331,9 @@ export class AffiliateServiceService {
     }
 
     const affiliate = coupon.affiliate;
-    const commission = saleAmount * 0.2;
+
+    const commissionRate = coupon.commissionPercentage || 5.0;
+    const commission = saleAmount * (commissionRate / 100);
 
     affiliate.walletBalance += commission;
     affiliate.totalEarnings += commission;
@@ -339,19 +343,18 @@ export class AffiliateServiceService {
     const transaction = this.affiliateTransactionRepository.create({
       affiliate,
       amount: commission,
-      description: `Commission from coupon ${couponCode} on sale ${saleAmount}`,
+      description: `Commission (${commissionRate}%) from coupon ${couponCode} on sale ${saleAmount}`,
     });
     await this.affiliateTransactionRepository.save(transaction);
 
     await this.sendNotification(
       affiliate.userId,
       'New Commission Added',
-      `You earned a commission of ${commission.toFixed(2)} from a sale using your coupon ${couponCode}.`
+      `You earned ${commission.toFixed(2)} (${commissionRate}%) from coupon ${couponCode}.`
     );
 
     return { commission, walletBalance: affiliate.walletBalance };
   }
-
 
   async getWalletBalance(userId: string) {
     const affiliate = await this.affiliateRepository.findOne({ where: { userId } });
@@ -458,5 +461,69 @@ export class AffiliateServiceService {
       throw new RpcException({ statusCode: 500, message: error?.message || 'Failed to count coupons' });
     }
   }
+
+  async adminCreateCoupon(dto: AdminCreateCouponDto) {
+    try {
+      const affiliate = await this.affiliateRepository.findOne({
+        where: { id: dto.affiliateId, status: AffiliateStatus.APPROVED },
+      });
+      if (!affiliate) {
+        throw new RpcException({ statusCode: 404, message: 'Affiliate not found or not approved' });
+      }
+
+      const existing = await this.couponRepository.findOne({ where: { code: dto.code } });
+      if (existing) throw new RpcException({ statusCode: 409, message: 'Coupon code already exists' });
+
+      const coupon = this.couponRepository.create({
+        code: dto.code,
+        discountPercentage: dto.discountPercentage,
+        commissionPercentage: dto.commissionPercentage,
+        affiliate,
+      });
+
+      affiliate.couponsCreated += 1;
+      await this.affiliateRepository.save(affiliate);
+
+      await this.sendNotification(
+        affiliate.userId,
+        'New Coupon Created',
+        `Admin created coupon ${dto.code} for you with ${dto.commissionPercentage}% commission rate.`
+      );
+
+      return this.couponRepository.save(coupon);
+    } catch (error) {
+      throw new RpcException({ statusCode: 500, message: error?.message || 'Failed to create coupon by admin' });
+    }
+  }
+
+  async updateCouponCommission(dto: UpdateCouponCommissionDto) {
+    try {
+      const coupon = await this.couponRepository.findOne({
+        where: { id: dto.couponId },
+        relations: ['affiliate'],
+      });
+
+      if (!coupon) {
+        throw new RpcException({ statusCode: 404, message: 'Coupon not found' });
+      }
+
+      const oldRate = coupon.commissionPercentage || 5.0;
+      coupon.commissionPercentage = dto.commissionPercentage;
+
+      const updatedCoupon = await this.couponRepository.save(coupon);
+
+      await this.sendNotification(
+        coupon.affiliate.userId,
+        'Commission Rate Updated',
+        `Commission rate for coupon ${coupon.code} updated from ${oldRate}% to ${dto.commissionPercentage}%.`
+      );
+
+      return updatedCoupon;
+    } catch (error) {
+      throw new RpcException({ statusCode: 500, message: error?.message || 'Failed to update coupon commission' });
+    }
+  }
+
+
 
 }

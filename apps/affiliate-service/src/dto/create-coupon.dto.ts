@@ -1,4 +1,4 @@
-import { IsString, Max, Min } from 'class-validator';
+import { IsNumber, IsOptional, IsString, Max, Min } from 'class-validator';
 
 export class CreateCouponDto {
   @IsString()
@@ -7,4 +7,10 @@ export class CreateCouponDto {
   @Min(0.1)
   @Max(5)
   discountPercentage: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  @Max(100)
+  commissionPercentage?: number;
 }

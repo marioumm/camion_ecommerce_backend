@@ -378,6 +378,40 @@ var AffiliateServiceController = /** @class */ (function () {
             });
         });
     };
+    AffiliateServiceController.prototype.handleAdminCreateCoupon = function (dto) {
+        return __awaiter(this, void 0, void 0, function () {
+            var error_13;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        _a.trys.push([0, 2, , 3]);
+                        return [4 /*yield*/, this.affiliateService.adminCreateCoupon(dto)];
+                    case 1: return [2 /*return*/, _a.sent()];
+                    case 2:
+                        error_13 = _a.sent();
+                        throw mapException(error_13);
+                    case 3: return [2 /*return*/];
+                }
+            });
+        });
+    };
+    AffiliateServiceController.prototype.handleUpdateCouponCommission = function (dto) {
+        return __awaiter(this, void 0, void 0, function () {
+            var error_14;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        _a.trys.push([0, 2, , 3]);
+                        return [4 /*yield*/, this.affiliateService.updateCouponCommission(dto)];
+                    case 1: return [2 /*return*/, _a.sent()];
+                    case 2:
+                        error_14 = _a.sent();
+                        throw mapException(error_14);
+                    case 3: return [2 /*return*/];
+                }
+            });
+        });
+    };
     __decorate([
         microservices_1.MessagePattern({ cmd: 'create_affiliate_request' }),
         __param(0, microservices_1.Payload())
@@ -450,6 +484,14 @@ var AffiliateServiceController = /** @class */ (function () {
     __decorate([
         microservices_1.MessagePattern({ cmd: 'count_all_coupons' })
     ], AffiliateServiceController.prototype, "countAllCoupons");
+    __decorate([
+        microservices_1.MessagePattern({ cmd: 'admin_create_coupon' }),
+        __param(0, microservices_1.Payload())
+    ], AffiliateServiceController.prototype, "handleAdminCreateCoupon");
+    __decorate([
+        microservices_1.MessagePattern({ cmd: 'update_coupon_commission' }),
+        __param(0, microservices_1.Payload())
+    ], AffiliateServiceController.prototype, "handleUpdateCouponCommission");
     AffiliateServiceController = __decorate([
         common_1.UsePipes(new common_1.ValidationPipe({
             exceptionFactory: function (errors) {

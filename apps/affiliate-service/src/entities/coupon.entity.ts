@@ -24,6 +24,9 @@ export class Coupon {
   @Column('float')
   discountPercentage: number;
 
+  @Column('float', { default: 5.0 })
+  commissionPercentage: number;
+
   @CreateDateColumn({ type: 'timestamp' })
   createdAt: Date;
 }
