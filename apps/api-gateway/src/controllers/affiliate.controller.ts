@@ -171,5 +171,12 @@ export class AffiliateController {
     return this.affiliateClient.send({ cmd: 'update_coupon_commission' }, dto);
   }
 
+  @Get('all')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  getAllAffiliates() {
+    return this.affiliateClient.send({ cmd: 'get_all_affiliates' }, {});
+  }
+
 
 }

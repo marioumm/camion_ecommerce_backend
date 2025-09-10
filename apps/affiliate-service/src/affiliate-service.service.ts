@@ -524,6 +524,16 @@ export class AffiliateServiceService {
     }
   }
 
+  async getAllAffiliates() {
+    try {
+      return await this.affiliateRepository.find();
+    } catch (error) {
+      throw new RpcException({
+        statusCode: 500,
+        message: error?.message || 'Failed to get all affiliates'
+      });
+    }
+  }
 
 
 }

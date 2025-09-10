@@ -412,6 +412,23 @@ var AffiliateServiceController = /** @class */ (function () {
             });
         });
     };
+    AffiliateServiceController.prototype.handleGetAllAffiliates = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            var error_15;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        _a.trys.push([0, 2, , 3]);
+                        return [4 /*yield*/, this.affiliateService.getAllAffiliates()];
+                    case 1: return [2 /*return*/, _a.sent()];
+                    case 2:
+                        error_15 = _a.sent();
+                        throw mapException(error_15);
+                    case 3: return [2 /*return*/];
+                }
+            });
+        });
+    };
     __decorate([
         microservices_1.MessagePattern({ cmd: 'create_affiliate_request' }),
         __param(0, microservices_1.Payload())
@@ -492,6 +509,9 @@ var AffiliateServiceController = /** @class */ (function () {
         microservices_1.MessagePattern({ cmd: 'update_coupon_commission' }),
         __param(0, microservices_1.Payload())
     ], AffiliateServiceController.prototype, "handleUpdateCouponCommission");
+    __decorate([
+        microservices_1.MessagePattern({ cmd: 'get_all_affiliates' })
+    ], AffiliateServiceController.prototype, "handleGetAllAffiliates");
     AffiliateServiceController = __decorate([
         common_1.UsePipes(new common_1.ValidationPipe({
             exceptionFactory: function (errors) {

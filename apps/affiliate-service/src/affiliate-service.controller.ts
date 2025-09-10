@@ -215,13 +215,23 @@ export class AffiliateServiceController {
   }
 
   @MessagePattern({ cmd: 'update_coupon_commission' })
-async handleUpdateCouponCommission(@Payload() dto: UpdateCouponCommissionDto) {
-  try {
-    return await this.affiliateService.updateCouponCommission(dto);
-  } catch (error) {
-    throw mapException(error);
+  async handleUpdateCouponCommission(@Payload() dto: UpdateCouponCommissionDto) {
+    try {
+      return await this.affiliateService.updateCouponCommission(dto);
+    } catch (error) {
+      throw mapException(error);
+    }
   }
-}
+
+  @MessagePattern({ cmd: 'get_all_affiliates' })
+  async handleGetAllAffiliates() {
+    try {
+      return await this.affiliateService.getAllAffiliates();
+    } catch (error) {
+      throw mapException(error);
+    }
+  }
+
 
 
 }

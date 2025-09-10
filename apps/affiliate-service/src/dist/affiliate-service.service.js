@@ -732,6 +732,26 @@ var AffiliateServiceService = /** @class */ (function () {
             });
         });
     };
+    AffiliateServiceService.prototype.getAllAffiliates = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            var error_19;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        _a.trys.push([0, 2, , 3]);
+                        return [4 /*yield*/, this.affiliateRepository.find()];
+                    case 1: return [2 /*return*/, _a.sent()];
+                    case 2:
+                        error_19 = _a.sent();
+                        throw new microservices_1.RpcException({
+                            statusCode: 500,
+                            message: (error_19 === null || error_19 === void 0 ? void 0 : error_19.message) || 'Failed to get all affiliates'
+                        });
+                    case 3: return [2 /*return*/];
+                }
+            });
+        });
+    };
     var AffiliateServiceService_1;
     AffiliateServiceService = AffiliateServiceService_1 = __decorate([
         common_1.Injectable(),

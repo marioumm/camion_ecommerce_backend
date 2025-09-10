@@ -92,6 +92,9 @@ var AffiliateController = /** @class */ (function () {
     AffiliateController.prototype.updateCouponCommission = function (dto) {
         return this.affiliateClient.send({ cmd: 'update_coupon_commission' }, dto);
     };
+    AffiliateController.prototype.getAllAffiliates = function () {
+        return this.affiliateClient.send({ cmd: 'get_all_affiliates' }, {});
+    };
     __decorate([
         common_1.UseGuards(src_1.JwtAuthGuard, roles_guard_1.RolesGuard),
         roles_decorator_1.Roles(user_entity_1.UserRole.USER),
@@ -207,6 +210,11 @@ var AffiliateController = /** @class */ (function () {
         common_1.Patch('coupon/commission'),
         __param(0, common_1.Body())
     ], AffiliateController.prototype, "updateCouponCommission");
+    __decorate([
+        common_1.Get('all'),
+        common_1.UseGuards(src_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+        roles_decorator_1.Roles(user_entity_1.UserRole.ADMIN)
+    ], AffiliateController.prototype, "getAllAffiliates");
     AffiliateController = __decorate([
         common_1.Controller('affiliates'),
         __param(0, common_1.Inject('AFFILIATE_SERVICE'))
