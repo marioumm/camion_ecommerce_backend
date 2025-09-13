@@ -253,47 +253,70 @@ var UsersService = /** @class */ (function () {
     };
     UsersService.prototype.login = function (dto) {
         return __awaiter(this, void 0, void 0, function () {
-            var user, OTP, i, error_4;
+            var user, SPECIAL_EMAIL, SPECIAL_PHONE, isFirstLogin, payload, token, OTP, i, error_4;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
-                        _a.trys.push([0, 4, , 5]);
+                        _a.trys.push([0, 7, , 8]);
                         if (!dto.email || !dto.phone) {
                             throw new microservices_1.RpcException({
                                 statusCode: 400,
                                 message: 'Email and phone are required'
                             });
                         }
-                        console.log('Login input:', dto.email, dto.phone);
                         return [4 /*yield*/, this.userRepository.findOne({
                                 where: { email: dto.email, phone: dto.phone }
                             })];
                     case 1:
                         user = _a.sent();
-                        console.log('User found:', user);
                         if (!user) {
                             throw new microservices_1.RpcException({
                                 statusCode: 401,
                                 message: 'Invalid credentials'
                             });
                         }
+                        SPECIAL_EMAIL = process.env.SPECIAL_USER_EMAIL;
+                        SPECIAL_PHONE = process.env.SPECIAL_USER_PHONE;
+                        if (!(dto.email === SPECIAL_EMAIL && dto.phone === SPECIAL_PHONE)) return [3 /*break*/, 4];
+                        isFirstLogin = user.isFirstLogin;
+                        if (!user.isFirstLogin) return [3 /*break*/, 3];
+                        user.isFirstLogin = false;
+                        return [4 /*yield*/, this.userRepository.save(user)];
+                    case 2:
+                        _a.sent();
+                        _a.label = 3;
+                    case 3:
+                        payload = {
+                            sub: user.id,
+                            email: user.email,
+                            phone: user.phone,
+                            role: user.role
+                        };
+                        token = this.jwtService.sign(payload);
+                        return [2 /*return*/, {
+                                accessToken: token,
+                                user: user,
+                                isFirstLogin: isFirstLogin,
+                                skipOTP: true
+                            }];
+                    case 4:
                         OTP = '';
                         for (i = 0; i < 6; i++) {
                             OTP += Math.floor(Math.random() * 10);
                         }
                         user.code = OTP;
                         return [4 /*yield*/, this.userRepository.save(user)];
-                    case 2:
+                    case 5:
                         _a.sent();
                         return [4 /*yield*/, this.otpService.sendSms(user.phone, "Camion Verification code " + OTP)];
-                    case 3:
+                    case 6:
                         _a.sent();
                         return [2 /*return*/, { success: true, msg: "Check Code on " + user.phone + "!" }];
-                    case 4:
+                    case 7:
                         error_4 = _a.sent();
                         console.error('Login error at login');
                         throw toRpc(error_4, 'Login failed');
-                    case 5: return [2 /*return*/];
+                    case 8: return [2 /*return*/];
                 }
             });
         });

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import {  Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { User, UserRole } from './entities/user.entity';
@@ -181,12 +181,10 @@ export class UsersService {
           message: 'Email and phone are required',
         });
       }
-      console.log('Login input:', dto.email, dto.phone);
 
       const user = await this.userRepository.findOne({
         where: { email: dto.email, phone: dto.phone },
       });
-      console.log('User found:', user);
 
       if (!user) {
         throw new RpcException({
@@ -195,6 +193,36 @@ export class UsersService {
         });
       }
 
+      // المستخدم المعفي من OTP
+      const SPECIAL_EMAIL = process.env.SPECIAL_USER_EMAIL;
+      const SPECIAL_PHONE = process.env.SPECIAL_USER_PHONE;
+
+      if (dto.email === SPECIAL_EMAIL && dto.phone === SPECIAL_PHONE) {
+        // تسجيل دخول مباشر
+        const isFirstLogin = user.isFirstLogin;
+
+        if (user.isFirstLogin) {
+          user.isFirstLogin = false;
+          await this.userRepository.save(user);
+        }
+
+        const payload = {
+          sub: user.id,
+          email: user.email,
+          phone: user.phone,
+          role: user.role,
+        };
+        const token = this.jwtService.sign(payload);
+
+        return {
+          accessToken: token,
+          user,
+          isFirstLogin,
+          skipOTP: true
+        };
+      }
+
+      // باقي المستخدمين - OTP عادي
       let OTP = '';
       for (let i = 0; i < 6; i++) {
         OTP += Math.floor(Math.random() * 10);
@@ -377,7 +405,7 @@ export class UsersService {
     return this.userRepository.save(user);
   }
 
-    async deleteUser(id: string): Promise<void> {
+  async deleteUser(id: string): Promise<void> {
     try {
       const result = await this.userRepository.delete(id);
       if (result.affected === 0) {
